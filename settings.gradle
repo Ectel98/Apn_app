@@ -1,0 +1,9 @@
+include ':rxandroidble'
+include ':dagger-compiler-shadow'
+include ':dagger-library-shadow'
+include ':rxandroidble'
+include ':dagger-compiler-shadow'
+include ':dagger-library-shadow'
+include ':Android-BLE-Scan-Example-master'
+include ':app'
+rootProject.name = "SplashScreen"

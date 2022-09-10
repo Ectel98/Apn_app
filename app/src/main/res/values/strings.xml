@@ -1,0 +1,50 @@
+<resources>
+    <string name="app_name">Sleep Apnea Detector</string>
+    <string name="action_settings">Settings</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <!-- connection_screen strings -->
+    <string name="text_advert_select_device">
+        Prima di proseguire assicurarsi che il Bluethoot del dispositivo sia acceso e che il dispositivo sia nelle immediate vicinanze.
+    </string>
+    <string name="text_shearing_device"> Ricerca dispositivo..</string>
+
+    <!-- content_main strings -->
+    <string name="text_menu">MENU</string>
+    <string name="text_button_settings">Impostazioni</string>
+    <string name="text_button_real_time">Ecg in tempo reale</string>
+    <string name="text_button_exit">Esci</string>
+    <string name="text_button_data">Dati salvati</string>
+    <string name="text_button_monitoring">Monitoraggio</string>
+
+    <!-- monitoring_screen strings -->
+    <string name="text_monitoring">Monitoraggio</string>
+    <string name="text_stete">Stato:</string>
+    <string name="text_start">Inizio:</string>
+    <string name="text_end">Fine:</string>
+    <string name="text_time">Tempo:</string>
+    <string name="text_button_start_sleep">Inizia</string>
+    <string name="text_button_end_sleep">Finisci monitoraggio</string>
+    <string name="text_button_load_data">Sarica dati</string>
+    <string name="battery_level">Livello batteria:</string>
+
+    <!-- data_saved_screen -->
+    <string name="text_list_data">
+        Lista dei monitoraggi effetttuati
+    </string>
+
+    <!-- analize_data_screen -->
+    <string name="saples_number">Numero di campioni: </string>
+    <string name="analisi_results">Risultati dell analisi: </string>
+    <string name="trsimission_erros">Errori di trasmissione: </string>
+    <string name="monitorng_erros">Errori di monitoraggio: </string>
+    <string name="heart_rate">Battito cardiaco medio: </string>
+    <string name="delete_data_button">Elimina dati</string>
+    <string name="results_button">Risultati</string>
+
+
+</resources>

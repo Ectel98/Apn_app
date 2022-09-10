@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/text_st_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="54dp"
+        android:layout_marginTop="63dp"
+        android:text="@string/text_start"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/text_en_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="26dp"
+        android:text="@string/text_end"
+        app:layout_constraintStart_toStartOf="@+id/text_st_time"
+        app:layout_constraintTop_toBottomOf="@+id/text_st_time" />
+
+    <TextView
+        android:id="@+id/tx_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        android:layout_marginBottom="25dp"
+        android:text="@string/text_time"
+        app:layout_constraintBottom_toTopOf="@+id/tx_n_samples"
+        app:layout_constraintStart_toStartOf="@+id/tx_n_samples" />
+
+    <TextView
+        android:id="@+id/tx_n_samples"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/saples_number"
+        tools:layout_editor_absoluteX="54dp"
+        tools:layout_editor_absoluteY="197dp" />
+
+    <TextView
+        android:id="@+id/tx_analisi_result"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:text="@string/analisi_results"
+        app:layout_constraintEnd_toEndOf="@+id/tx_n_samples"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/tx_heart_rate"
+        app:layout_constraintTop_toBottomOf="@+id/tx_heart_rate" />
+
+    <TextView
+        android:id="@+id/tx_heart_rate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="52dp"
+        android:text="@string/heart_rate"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:layout_editor_absoluteY="244dp" />
+
+    <Button
+        android:id="@+id/bt_delete_data"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="43dp"
+        android:text="@string/delete_data_button"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/bt_results"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="120dp"
+        android:text="@string/results_button"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.501"
+        app:layout_constraintStart_toStartOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
