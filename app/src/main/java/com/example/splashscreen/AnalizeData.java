@@ -31,6 +31,8 @@ public class AnalizeData extends AppCompatActivity {
     Button results;
     DataEcg table;
 
+    Results res = new Results(this);
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,7 +75,7 @@ public class AnalizeData extends AppCompatActivity {
         results.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
 
-                //
+                res.start_analisy();
 
             }
         });
