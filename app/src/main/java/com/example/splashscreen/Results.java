@@ -19,11 +19,15 @@ public class Results {
         return ecg_database;
     }
 
-    private int id;
-    private int uf;
+    private long id;
 
     private float interval[] = new float[2];
     private float time_pico[] = new float[2];
+
+
+    private float interval_interp[] = new float[43200];
+    private float time_pico_interp[] = new float[43200];
+    private int index_interp = 0;
 
     private long n_data;
 
@@ -35,7 +39,9 @@ public class Results {
         this.context = context;
     }
 
-    public int start_analisy() {
+    public int start_analisy(long identity) {
+
+        id = identity;                        //ID tabella database
 
         first_load_data();
 
@@ -44,7 +50,8 @@ public class Results {
             return 1;
         }
 
-        linear_interpolation();
+        while (linear_interpolation());
+
         detrend();
         ht();
         htfilt();
@@ -72,7 +79,11 @@ public class Results {
         n_data = getDatabaseManager().noteModel().loadNote(id).number_data;   // Lettura dati dal database
         String data = getDatabaseManager().noteModel().loadNote(id).data;     //
 
-        index = data.indexOf(data,new_index);
+        try {
+            index = data.indexOf(".",new_index);
+        }catch (StringIndexOutOfBoundsException siobe) {
+            return 0;
+        }
         value = Float.parseFloat(data.substring(new_index,index+2));
         new_index=index+2;
 
@@ -80,12 +91,42 @@ public class Results {
 
     }
 
-    private void linear_interpolation() {
+    private boolean linear_interpolation() {
+
+        // X -> time_pico
+        // Y -> interval
+
+        float x0 = time_pico[0] + 1;
+        float data;
 
 
+        if (x0 > time_pico[1] ) {
 
+            time_pico[0] = time_pico[1];
+            interval[0] = interval[1];
 
-        //A ogni chiamata restituisco un dato
+            data = read_value();
+
+            if (data == 0) {  //Se sono finiti i dati
+                return false;
+            } else {
+                interval[1] = data;
+                time_pico[1] += interval[1];
+            }
+        }
+
+        float b = (interval[1] - interval[0]) / (time_pico[1] - time_pico[0]);
+        float a = interval[0] - b*time_pico[0];
+
+        float y0 = (b*x0 + a);
+
+        x0++;
+        index_interp++;
+
+        interval_interp[index_interp] = y0;
+        time_pico_interp[index_interp] = x0;
+
+        return true;
 
     }
 
