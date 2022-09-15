@@ -22,15 +22,21 @@ public class Results {
 
     private long id;
 
-    private float interval[] = new float[2];
-    private float time_pico[] = new float[2];
+    class parameters {
+        public float interval[];
+        public float time_pico[];
+        public parameters(int dimension) {
+            interval = new float[dimension];
+            time_pico = new float[dimension];
+        }
+    };
 
-    private float interval_interp[] = new float[43200];  //Max 12 ore
-    private float time_pico_interp[] = new float[43200];
+    private parameters read = new parameters(2);
+    private parameters interp = new parameters(43200);
+    private parameters detrend = new parameters(43200);
+    private parameters smooth = new parameters(43200);
+
     private int index_interp = 0;
-
-    private float interval_detrend[] = new float[43200];
-    private float time_pico_detrend[] = new float[43200];
 
     private long n_data;
 
@@ -72,12 +78,12 @@ public class Results {
 
     private void first_load_data() {     //restituisce x e y per l'interpolazione
 
-        time_pico[0] = read_value();
-        interval[0] = read_value();
-        time_pico[0] += interval[0];
+        read.time_pico[0] = read_value();
+        read.interval[0] = read_value();
+        read.time_pico[0] += read.interval[0];
 
-        interval[1] = read_value();
-        time_pico[1] += interval[1];
+        read.interval[1] = read_value();
+        read.time_pico[1] += read.interval[1];
 
     };
 
@@ -111,34 +117,35 @@ public class Results {
         float b;
         float data;
 
-        x0 = time_pico[0] + 1000;
+        x0 = read.time_pico[0] + 1000;
 
 
-        if (x0 > time_pico[1]) {
+        if (x0 > read.time_pico[1]) {
 
-            time_pico[0] = time_pico[1];
-            interval[0] = interval[1];
+            read.time_pico[0] = read.time_pico[1];
+            read.interval[0] = read.interval[1];
 
             data = read_value();
 
             if (data == 0) {  //Se sono finiti i dati
                 return false;
             } else {
-                interval[1] = data;
-                time_pico[1] += interval[1];
+                read.interval[1] = data;
+                read.time_pico[1] += read.interval[1];
             }
         }
 
-        b = (interval[1] - interval[0]) / (time_pico[1] - time_pico[0]);
-        a = interval[0] - b * time_pico[0];
+        b = (read.interval[1] - read.interval[0]) / (read.time_pico[1] - read.time_pico[0]);
+        a = read.interval[0] - b * read.time_pico[0];
+
 
         y0 = (b * x0 + a);
 
         x0++;
         index_interp++;
 
-        interval_interp[index_interp] = y0;
-        time_pico_interp[index_interp] = x0;
+        interp.interval[index_interp] = y0;
+        interp.time_pico[index_interp] = x0;
 
         return true;
 
@@ -161,36 +168,36 @@ public class Results {
         }
 
         for (i=0; i<win; i++) {
-            sumx += time_pico_interp[i];
-            sumy += interval_interp[i];
-            sumxy += time_pico_interp[i]*interval_interp[i];
-            sumx2 += time_pico_interp[i]*time_pico_interp[i];
+            sumx += interp.time_pico[i];
+            sumy += interp.interval[i];
+            sumxy += interp.time_pico[i]*interp.interval[i];
+            sumx2 += interp.time_pico[i]*interp.time_pico[i];
         }
 
         b = (sumxy - sumx*sumy/win) / (sumx2 - sumx*sumx/win);
         a = sumy/win - b*sumx/win;
 
         for (i=0; i<=hwin; i++) {
-            interval_detrend[i] = interval_interp[i] - (a + b * time_pico_interp[i]);
-            time_pico_detrend[i] = time_pico_interp[i];
+            detrend.interval[i] = interp.interval[i] - (a + b * interp.time_pico[i]);
+            detrend.time_pico[i] = interp.time_pico[i];
         }
 
         for (i=win ; i<index_interp; i++) {
-            sumx += time_pico_interp[i]-time_pico_interp[i-win];
-            sumy += interval_interp[i]-interval_interp[i-win];
-            sumxy += time_pico_interp[i]*interval_interp[i]-time_pico_interp[i-win]*interval_interp[i-win];
-            sumx2 += time_pico_interp[i]*time_pico_interp[i]-time_pico_interp[i-win]*time_pico_interp[i-win];
+            sumx += interp.time_pico[i]-interp.time_pico[i-win];
+            sumy += interp.interval[i]-interp.interval[i-win];
+            sumxy += interp.time_pico[i]*interp.interval[i]-interp.time_pico[i-win]*interp.interval[i-win];
+            sumx2 += interp.time_pico[i]*interp.time_pico[i]-interp.time_pico[i-win]*interp.time_pico[i-win];
 
             b = (sumxy - sumx*sumy/win) / (sumx2 - sumx*sumx/win);
             a = sumy/win - b*sumx/win;
 
-            interval_detrend[i-hwin] = interval_interp[i-hwin] - (a + b*time_pico_interp[i-hwin]);
-            time_pico_detrend[i-hwin] = time_pico_interp[i-hwin];
+            detrend.interval[i-hwin] = interp.interval[i-hwin] - (a + b*interp.time_pico[i-hwin]);
+            detrend.time_pico[i-hwin] = interp.time_pico[i-hwin];
         }
 
         for (i=i-hwin; i<index_interp; i++) {
-            interval_detrend[i] = interval_interp[i] - (a + b * time_pico_interp[i]);
-            time_pico_detrend[i] = time_pico_interp[i];
+            detrend.interval[i] = interp.interval[i] - (a + b * interp.time_pico[i]);
+            detrend.time_pico[i] = interp.time_pico[i];
         }
 
         return true;
@@ -199,6 +206,20 @@ public class Results {
 
     private void smooth() {
 
+        float sumx,sumy,win;
+
+        int i= 0;
+
+        win = 5;
+
+        sumx = sumy = 0;
+
+        for (i = 0;i<win;i++){
+            sumx += detrend.time_pico[i];
+            sumy += detrend.interval[i];
+        }
+
+
     };
 
     private void ht() {};
@@ -206,3 +227,4 @@ public class Results {
     private void htfilt() {};
 
 }
+
