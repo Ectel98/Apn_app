@@ -2,15 +2,12 @@ package com.example.splashscreen;
 
 import android.content.Context;
 
-
-import com.example.splashscreen.database.DataEcg;
 import com.example.splashscreen.database.DataEcgDatabase;
 
 public class Results {
 
-    private Context context;
+    private final Context context;
 
-    DataEcg table;
 
     private DataEcgDatabase ecg_database;
 
@@ -22,19 +19,19 @@ public class Results {
 
     private long id;
 
-    class parameters {
-        public float interval[];
-        public float time_pico[];
+    static class parameters {
+        public float[] interval;
+        public float[] time_pico;
         public parameters(int dimension) {
             interval = new float[dimension];
             time_pico = new float[dimension];
         }
-    };
+    }
 
-    private parameters read = new parameters(2);
-    private parameters interp = new parameters(43200);
-    private parameters detrend = new parameters(43200);
-    private parameters smooth = new parameters(43200);
+    private final parameters read = new parameters(2);
+    private final parameters interp = new parameters(43200);
+    private parameters detrend;
+    private parameters smooth;
 
     private int index_interp = 0;
 
@@ -63,10 +60,12 @@ public class Results {
 
         while (linear_interpolation());
 
-
+        detrend = new parameters(index_interp);
 
         if(!detrend())
             return 1;
+
+        smooth = new parameters(index_interp);
 
         smooth();
         ht();
@@ -74,7 +73,7 @@ public class Results {
 
         return 0;
 
-    };
+    }
 
     private void first_load_data() {     //restituisce x e y per l'interpolazione
 
@@ -85,7 +84,7 @@ public class Results {
         read.interval[1] = read_value();
         read.time_pico[1] += read.interval[1];
 
-    };
+    }
 
 
     private float read_value() {
@@ -107,7 +106,7 @@ public class Results {
 
     }
 
-    private boolean linear_interpolation() { //Interpolazione lineare, Ricampiono ogni secondo
+    private boolean linear_interpolation() { // NON funziona così ! loop interno !  Interpolazione lineare, Ricampiono ogni secondo
 
         // X -> time_pico [ms]
         // Y -> interval  [ms]
@@ -141,11 +140,12 @@ public class Results {
 
         y0 = (b * x0 + a);
 
-        x0++;
-        index_interp++;
 
         interp.interval[index_interp] = y0;
         interp.time_pico[index_interp] = x0;
+
+        x0++;
+        index_interp++;
 
         return true;
 
@@ -204,7 +204,7 @@ public class Results {
 
     }
 
-    private void smooth() {
+    private void smooth() { //Moving average filter Da rifare
 
         float sumx,sumy,win;
 
@@ -219,12 +219,37 @@ public class Results {
             sumy += detrend.interval[i];
         }
 
+        smooth.interval[i] = sumx/win;
+        smooth.time_pico[i] = sumy/win;
 
-    };
+        sumx -= detrend.time_pico[0];
+        sumy -= detrend.interval[0];
 
-    private void ht() {};
+        i = 0;
 
-    private void htfilt() {};
+        while (i<index_interp) {
+
+            sumx += detrend.time_pico[i];
+            sumy += detrend.interval[i];
+
+            smooth.interval[i] = sumy/win;
+            smooth.time_pico[i] = sumx/win;
+
+            if (++i >= win)
+                i = 0;
+
+            sumx -= detrend.time_pico[i];
+            sumy -= detrend.interval[i];
+
+        }
+    }
+
+
+    private void ht() { //Hilbert transform
+
+    }
+
+    private void htfilt() {}
 
 }
 

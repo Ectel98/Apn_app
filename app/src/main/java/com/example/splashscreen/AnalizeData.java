@@ -38,19 +38,19 @@ public class AnalizeData extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.analize_data_screen);
 
-        String d = "";
+        String d;
         long e;
 
         Intent i;
 
-        start_time = (TextView) findViewById(R.id.text_st_time);
-        end_time = (TextView) findViewById(R.id.text_en_time);
-        time = (TextView) findViewById(R.id.tx_time);
-        n_samples = (TextView) findViewById(R.id.tx_n_samples);
-        heart_rate = (TextView) findViewById(R.id.tx_heart_rate);
-        analisi_result = (TextView) findViewById(R.id.tx_analisi_result);
-        delete_data = (Button) findViewById(R.id.bt_delete_data);
-        results = (Button) findViewById(R.id.bt_results);
+        start_time = findViewById(R.id.text_st_time);
+        end_time = findViewById(R.id.text_en_time);
+        time = findViewById(R.id.tx_time);
+        n_samples = findViewById(R.id.tx_n_samples);
+        heart_rate = findViewById(R.id.tx_heart_rate);
+        analisi_result = findViewById(R.id.tx_analisi_result);
+        delete_data = findViewById(R.id.bt_delete_data);
+        results = findViewById(R.id.bt_results);
 
         i = getIntent();
         long id = i.getExtras().getInt("id");

@@ -7,12 +7,10 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.splashscreen.database.DataEcg;
 import com.example.splashscreen.database.DataEcgDatabase;
 
 import java.util.ArrayList;
@@ -24,7 +22,7 @@ public class DataSaved extends AppCompatActivity {
     Button delete_bt;
     ArrayAdapter<String> adapter;
 
-    String id[] = {""};
+    String[] id = {""};
 
     Intent i;
 
@@ -41,8 +39,8 @@ public class DataSaved extends AppCompatActivity {
         setContentView(R.layout.data_saved_screen);
 
 
-        list = (ListView) findViewById(R.id.list_data);
-        delete_bt = (Button) findViewById(R.id.button);
+        list = findViewById(R.id.list_data);
+        delete_bt = findViewById(R.id.button);
 
         delete_bt.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -81,7 +79,7 @@ public class DataSaved extends AppCompatActivity {
 
     public void load_id() {
 
-        List<String> u = new ArrayList<String>();
+        List<String> u = new ArrayList<>();
 
         int size = getDatabaseManager().noteModel().loadAllNotes().size();
         String d;
@@ -97,7 +95,7 @@ public class DataSaved extends AppCompatActivity {
         //if (size<1)
         //    System.out.println("Nessun dato da visulizzare");
 
-        adapter=new ArrayAdapter<String>(this, R.layout.list_view,R.id.textViewList,u);
+        adapter=new ArrayAdapter<>(this, R.layout.list_view,R.id.textViewList,u);
 
         list.setAdapter(adapter);
     }

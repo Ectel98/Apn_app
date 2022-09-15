@@ -1,13 +1,10 @@
 package com.example.splashscreen;
 
 import android.Manifest;
-import android.app.AlertDialog;
 
 import android.content.BroadcastReceiver;
 
-import android.content.DialogInterface;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
 
 
 import android.content.Context;
@@ -15,7 +12,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 
 import android.content.pm.PackageManager;
-import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.KeyEvent;
@@ -24,16 +20,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import java.util.Set;
 
 
 public class ConnectionScreen extends AppCompatActivity {
 
     private static final int REQUEST_ENABLE_BT = 1;
-    private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
+    //private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
 
 
-    private Handler mHandler = new Handler();
+    private final Handler mHandler = new Handler();
 
     BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     //LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -87,19 +82,16 @@ public class ConnectionScreen extends AppCompatActivity {
     }
 
     public boolean ChekPermiss() {
-        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-            && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
-            && bluetoothAdapter.isEnabled())
-            return true;
-        else
-            return false;
+        return checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                && bluetoothAdapter.isEnabled();
     }
 
 
 
     //---------------Ricezione messaggi dal service-------------
 
-    private BroadcastReceiver messageReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver messageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String data;

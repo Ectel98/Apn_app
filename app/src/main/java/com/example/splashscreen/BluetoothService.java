@@ -1,7 +1,6 @@
 package com.example.splashscreen;
 
-import android.Manifest;
-import android.app.AlertDialog;
+
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -19,16 +18,12 @@ import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.os.Binder;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import java.util.Calendar;
-import org.apache.commons.lang3.StringUtils;
 
 
 import androidx.annotation.RequiresApi;
@@ -44,8 +39,6 @@ import java.util.UUID;
 
 public class BluetoothService extends Service {
 
-    private static final int REQUEST_ENABLE_BT = 1;
-    private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
 
     private static final int NOTIF_ID = 1;
     private static final String NOTIF_CHANNEL_ID = "Channel_Id";

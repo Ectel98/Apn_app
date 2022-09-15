@@ -1,18 +1,12 @@
 package com.example.splashscreen;
 
-import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattService;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.os.Messenger;
-import android.os.RemoteException;
 import android.os.StrictMode;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
@@ -45,12 +39,12 @@ public class Monitoring extends AppCompatActivity {
 
         button_flag = true;
 
-        state = (TextView) findViewById(R.id.state_text);
-        time_start = (TextView) findViewById(R.id.time_start_text);
-        time_end = (TextView) findViewById(R.id.time_end_text);
-        time_total = (TextView) findViewById(R.id.time_text);
+        state =  findViewById(R.id.state_text);
+        time_start = findViewById(R.id.time_start_text);
+        time_end =  findViewById(R.id.time_end_text);
+        time_total =  findViewById(R.id.time_text);
 
-        start_end_moni = (Button) findViewById(R.id.start_end_button);
+        start_end_moni = findViewById(R.id.start_end_button);
 
         start_end_moni.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -76,7 +70,7 @@ public class Monitoring extends AppCompatActivity {
     }
 
 
-    private BroadcastReceiver messageReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver messageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
 

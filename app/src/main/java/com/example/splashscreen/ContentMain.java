@@ -1,6 +1,5 @@
 package com.example.splashscreen;
 
-import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.KeyEvent;
@@ -22,7 +21,7 @@ public class ContentMain extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.content_main);
 
-        start_m_button = (Button) findViewById(R.id.start_monit_button);
+        start_m_button = findViewById(R.id.start_monit_button);
         start_m_button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 myIntent = new Intent(ContentMain.this, Monitoring.class);
@@ -30,7 +29,7 @@ public class ContentMain extends AppCompatActivity {
             }
         });
 
-        d_button = (Button) findViewById(R.id.data_button);
+        d_button =  findViewById(R.id.data_button);
         d_button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 myIntent = new Intent(ContentMain.this, DataSaved.class);
@@ -39,7 +38,7 @@ public class ContentMain extends AppCompatActivity {
         });
 
 
-        st_button = (Button) findViewById(R.id.settings_button);
+        st_button = findViewById(R.id.settings_button);
         st_button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 myIntent = new Intent(ContentMain.this, Settings.class);
