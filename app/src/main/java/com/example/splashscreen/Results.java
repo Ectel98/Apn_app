@@ -1,7 +1,14 @@
+/*
+
+References
+
+Goldberger, A., Amaral, L., Glass, L., Hausdorff, J., Ivanov, P. C., Mark, R., ... & Stanley, H. E. (2000). PhysioBank, PhysioToolkit, and PhysioNet: Components of a new research resource for complex physiologic signals. Circulation [Online]. 101 (23), pp. e215–e220.
+
+ */
+
 package com.example.splashscreen;
 
 import android.content.Context;
-
 import com.example.splashscreen.database.DataEcgDatabase;
 
 public class Results {
@@ -58,7 +65,7 @@ public class Results {
             return 1;
         }
 
-        while (linear_interpolation());
+        linear_interpolation();
 
         detrend = new parameters(index_interp);
 
@@ -106,7 +113,7 @@ public class Results {
 
     }
 
-    private boolean linear_interpolation() { // NON funziona così ! loop interno !  Interpolazione lineare, Ricampiono ogni secondo
+    private boolean linear_interpolation() { // Interpolazione lineare, Ricampiono ogni secondo
 
         // X -> time_pico [ms]
         // Y -> interval  [ms]
@@ -116,38 +123,40 @@ public class Results {
         float b;
         float data;
 
+        interp.interval[0] = read_value();
+        interp.time_pico[0] += interp.interval[0];
+
         x0 = read.time_pico[0] + 1000;
 
+        while(true) {
 
-        if (x0 > read.time_pico[1]) {
+            if (x0 > read.time_pico[1]) {
 
-            read.time_pico[0] = read.time_pico[1];
-            read.interval[0] = read.interval[1];
+                read.time_pico[0] = read.time_pico[1];
+                read.interval[0] = read.interval[1];
 
-            data = read_value();
+                data = read_value();
 
-            if (data == 0) {  //Se sono finiti i dati
-                return false;
-            } else {
-                read.interval[1] = data;
-                read.time_pico[1] += read.interval[1];
+                if (data == 0) {  //Se sono finiti i dati
+                    return true; //Uscita
+                } else {
+                    read.interval[1] = data;
+                    read.time_pico[1] += read.interval[1];
+                }
             }
+
+            b = (read.interval[1] - read.interval[0]) / (read.time_pico[1] - read.time_pico[0]);
+            a = read.interval[0] - b * read.time_pico[0];
+
+            y0 = (b * x0 + a);
+
+            interp.interval[index_interp] = y0;
+            interp.time_pico[index_interp] = x0;
+
+            x0++;
+            index_interp++;
+
         }
-
-        b = (read.interval[1] - read.interval[0]) / (read.time_pico[1] - read.time_pico[0]);
-        a = read.interval[0] - b * read.time_pico[0];
-
-
-        y0 = (b * x0 + a);
-
-
-        interp.interval[index_interp] = y0;
-        interp.time_pico[index_interp] = x0;
-
-        x0++;
-        index_interp++;
-
-        return true;
 
     }
 
@@ -155,7 +164,7 @@ public class Results {
 
         int hwin = 40;
         int win = 2*hwin +1;
-        int i = 0;
+        int i;
 
         float sumx,sumy,sumxy,sumx2;
         float a,b;
@@ -163,7 +172,7 @@ public class Results {
         sumx = sumy = sumxy = sumx2 = 0;
 
         if (index_interp >= 43200) {
-            System.out.print("Index out of range");
+            System.out.print("Error: Index out of range");
             return false;
         }
 
@@ -204,14 +213,12 @@ public class Results {
 
     }
 
-    private void smooth() { //Moving average filter Da rifare
+    private void smooth() { //Moving average filter
 
-        float sumx,sumy,win;
-
-        int i= 0;
+        float sumx,sumy;
+        int i,win;
 
         win = 5;
-
         sumx = sumy = 0;
 
         for (i = 0;i<win;i++){
@@ -219,29 +226,25 @@ public class Results {
             sumy += detrend.interval[i];
         }
 
-        smooth.interval[i] = sumx/win;
-        smooth.time_pico[i] = sumy/win;
+        smooth.interval[0] = sumx/win;
+        smooth.time_pico[0] = sumy/win;
 
         sumx -= detrend.time_pico[0];
         sumy -= detrend.interval[0];
 
-        i = 0;
-
-        while (i<index_interp) {
+        for (;i<index_interp;i++) {
 
             sumx += detrend.time_pico[i];
             sumy += detrend.interval[i];
 
-            smooth.interval[i] = sumy/win;
-            smooth.time_pico[i] = sumx/win;
+            smooth.interval[i-win+1] = sumy/win;
+            smooth.time_pico[i-win+1] = sumx/win;
 
-            if (++i >= win)
-                i = 0;
-
-            sumx -= detrend.time_pico[i];
-            sumy -= detrend.interval[i];
+            sumx -= detrend.time_pico[i-win+1];
+            sumy -= detrend.interval[i-win+1];
 
         }
+
     }
 
 
