@@ -9,9 +9,14 @@ Goldberger, A., Amaral, L., Glass, L., Hausdorff, J., Ivanov, P. C., Mark, R., .
 package com.example.splashscreen;
 
 import android.content.Context;
+
+
 import com.example.splashscreen.database.DataEcgDatabase;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 public class Results {
 
@@ -48,6 +53,89 @@ public class Results {
         }
     }
 
+    static class win_data {
+
+        public double[] start;
+        public double[] avy;
+        public double[] sdy;
+        public double[] ydetw;
+        public double[] avz;
+        public double[] sdz;
+        public double[] zdetw;
+        public boolean[] result;
+        public int numb_positive;
+
+        public win_data(int dimension) {
+            start = new double[dimension];
+            avy = new double[dimension];
+            sdy = new double[dimension];
+            ydetw = new double[dimension];
+            avz  = new double[dimension];
+            sdz = new double[dimension];
+            zdetw = new double[dimension];
+        }
+
+        public void limits() {
+
+            final double AVAMP0=0.65;
+            final double AVAMP1=2.5;
+            final double SDAMP0=0;
+            final double SDAMP1=0.6f;
+            final double AMPTIME0=0.006;
+            final double AMPTIME1=1;
+            final double AVFREQ0=0.01;
+            final double AVFREQ1=0.055;
+            final double SDFREQ0=0;
+            final double SDFREQ1=0.01;
+            final double FREQTIME0=0.7;
+            final double FREQTIME1=1;
+
+            numb_positive = 0;
+
+            for (int i = 0;i<avy.length;i++) {
+                result[i] = (avy[i] >= AVAMP0 && avy[i] <= AVAMP1) && (sdy[i] >= SDAMP0 && sdy[i]<= SDAMP1) && (ydetw[i] >= AMPTIME0 && ydetw[i] <= AMPTIME1) && (avz[i] >= AVFREQ0 && avz[i] <= AVFREQ1) && (sdz[i] >= SDFREQ0 && sdz[i] <= SDFREQ1) && (zdetw[i] >= FREQTIME0 && zdetw[i] <= FREQTIME1);
+                numb_positive++;
+            }
+        }
+    }
+
+
+    static class time_interval {
+
+        private List<Date> st_time;
+        private List<Date> end_time;
+        private Date sum;
+        private Boolean error;
+
+        public time_interval() {
+            st_time = new ArrayList<>();
+            end_time = new ArrayList<>();
+            sum = new Date();
+            error = false;
+        }
+
+        public time_interval(boolean e) {
+            error = e;
+        }
+
+        public void add(long a,long b) {
+            st_time.add(new Date(a));
+            end_time.add(new Date(b));
+        }
+
+        public void add(long c) {
+            sum = new Date(c);
+        }
+
+        public void data_out() {
+
+            return;
+
+        }
+
+    }
+
+
     private int index_interp = 0;
 
     private long n_data;
@@ -58,14 +146,17 @@ public class Results {
     private int new_index = 0;                 //
 
 
-
     public Results(Context context) {
         this.context = context;
     }
 
-    public int start_analisy(long identity) {
+
+    public time_interval start_analisy(long identity) {
 
         parameters read,interp,detrend,smooth,ht,htfilt,amp_norm;
+
+        win_data wdata;
+
         double thrs;
 
         id = identity;                        //ID tabella database
@@ -74,7 +165,8 @@ public class Results {
 
         if (n_data < 100) {
             System.out.print("Dati insufficenti");
-            return 1;
+            time_interval t_er = new time_interval(true);
+            return t_er;
         }
 
         interp = linear_interpolation(read);
@@ -91,9 +183,11 @@ public class Results {
 
         thrs = fht_min_thr(amp_norm);
 
-        htavsd(thrs,amp_norm);
+        wdata = htavsd(thrs,amp_norm);
 
-        return 0;
+        wdata.limits();
+
+        return detruns(wdata);
 
     }
 
@@ -430,7 +524,11 @@ public class Results {
 
     }
 
-    private void htavsd (double thres, parameters amp_norm) {
+    private win_data htavsd (double thres, parameters amp_norm) {
+
+        win_data wdata;
+
+        int e = 1;
 
         final int incr = 3600;     //Incremento
 
@@ -442,6 +540,8 @@ public class Results {
 
         double start,sumy,sumz,sumzz,sumyy,avy,avz,sdy,sdz;
         int ydet,zdet;
+
+        wdata = new win_data(index_interp);
 
         ydet = zdet = 0;
 
@@ -474,33 +574,33 @@ public class Results {
         sdy = Math.sqrt((sumyy - sumy*sumy/win)/(win-1));
         sdz = Math.sqrt((sumzz - sumz*sumz/win)/(win-1));
 
-        printf("%02d:%02d:%02d ", start/3600, (start%3600)/60, start%60);
-        printf("%f %f %f %f %f %f\n", avy, sdy, ((double)ydet)/win, avz, sdz, ((double)zdet)/win);
+        wdata.start[0] = start;
+        wdata.avy[0] = avy;
+        wdata.sdy[0] = sdy;
+        wdata.ydetw[0] = ((double)ydet)/win;
+        wdata.avz[0] = avz;
+        wdata.sdz[0] = sdz;
+        wdata.zdetw[0] = ((double)zdet)/win;
 
-        if (incr == win) {
-            sumy = sumz =sumyy = sumzz = 0.0;
-            ydet = zdet = 0;
-        }
+        for (int j=0; j<incr; j++) {
+            sumy -= amp_norm.ampl[j];
+            sumz -= amp_norm.omega[j];
+            sumyy -= amp_norm.ampl[j]*amp_norm.ampl[j];
+            sumzz -= amp_norm.omega[j]*amp_norm.omega[j];
 
-        else {
-            for (int j=0; j<incr; j++) {
-                if (j >= win)
-                    j = 0;
-                sumy -= amp_norm.ampl[j];
-                sumz -= amp_norm.omega[j];
-                sumyy -= amp_norm.ampl[j]*amp_norm.ampl[j];
-                sumzz -= amp_norm.omega[j]*amp_norm.omega[j];
-
-                if (amp_norm.ampl[j] >= thres)
-                    ydet--;
-                if (amp_norm.omega[j] <= 0.06)
-                    zdet--;
-            }
+            if (amp_norm.ampl[j] >= thres)
+                ydet--;
+            if (amp_norm.omega[j] <= 0.06)
+                zdet--;
         }
 
         start += incr;
 
         for (int i = win; i<index_interp; i++) {   //Da sistemare: i arriva fino a win
+
+            while (amp_norm.time[i]< start && i<index_interp)  {
+                i++;
+            }
 
             sumy += amp_norm.ampl[i];
             sumz += amp_norm.omega[i];
@@ -512,13 +612,13 @@ public class Results {
             if (amp_norm.omega[i] <= 0.06)
                 zdet++;
 
-            if (++i >= win)
-                i = 0;
+            if (i > win*e)
+                e++;
 
-            for (int j=1; j<incr && j<win; i++, j++) {
+            for (int j=1; j<incr; i++, j++) {
 
-                if (i >= win)
-                    i = 0;
+                if (i >= win*e)
+                    e++;
 
                 sumy += amp_norm.ampl[i];
                 sumz += amp_norm.omega[i];
@@ -531,46 +631,124 @@ public class Results {
                     zdet++;
             }
 
-            if (i >= win)
-                i = 0;
+            if (i >= win*e)
+                e++;
 
             avy = sumy/win;
             avz = sumz/win;
             sdy = Math.sqrt((sumyy - sumy*sumy/win)/(win-1));
             sdz = Math.sqrt((sumzz - sumz*sumz/win)/(win-1));
 
-            printf("%02d:%02d:%02d ", start/3600, (start%3600)/60, start%60);
-            printf("%f %f %f %f %f %f\n", avy, sdy, ((double)ydet)/win, avz, sdz, ((double)zdet)/win);
+            wdata.start[i] = start;
+            wdata.avy[i] = avy;
+            wdata.sdy[i] = sdy;
+            wdata.ydetw[i] = ((double)ydet)/(win*e);
+            wdata.avz[i] = avz;
+            wdata.sdz[i] = sdz;
+            wdata.zdetw[i] = ((double)zdet)/(win*e);
 
-            if (incr == win) {
-                sumy = sumz =sumyy = sumzz = 0.0;
-                ydet = zdet = 0;
+
+            for (int j=0, k=j+i; j<incr; j++, k++) {
+                if (k >= win*e)
+                    k = (e-1)*win;
+                sumy -= amp_norm.ampl[k];
+                sumz -= amp_norm.omega[k];
+                sumyy -= amp_norm.ampl[k]*amp_norm.ampl[k];
+                sumzz -= amp_norm.omega[k]*amp_norm.omega[k];
+                if (amp_norm.ampl[k] >= thres)
+                    ydet--;
+                if (amp_norm.omega[k] <= 0.06)
+                    zdet--;
             }
 
-            else {
-                for (int j=0, k=j+i; j<incr; j++, k++) {
-                    if (k >= win)
-                        k = 0;
-                    sumy -= amp_norm.ampl[k];
-                    sumz -= amp_norm.omega[k];
-                    sumyy -= amp_norm.ampl[k]*amp_norm.ampl[k];
-                    sumzz -= amp_norm.omega[k]*amp_norm.omega[k];
-                    if (amp_norm.ampl[k] >= thres)
-                        ydet--;
-                    if (amp_norm.omega[k] <= 0.06)
-                        zdet--;
-                }
-            }
 
             start += incr;
 
         }
 
+        return wdata;
+
     }
 
-    private void limits () {}
+    private time_interval detruns (win_data wdata) {
 
-    private void detruns () {}
+        final int incr = 3600;
+        final int win = 18000;
+        int min = 54000;
+
+        time_interval t_inter = new time_interval();
+
+        int i = 0;
+
+        boolean runflag,runflag0;
+        double runstart,lasttime,time,runstart0,runend0,sum;
+
+        double[] times = new double[wdata.numb_positive];
+
+        for (int e = 0,u = 0; e<index_interp;e++) {
+            if (wdata.result[i]) {
+                times[u] = wdata.start[i];
+                u++;
+            }
+        }
+
+
+        runflag = runflag0 = false;
+
+        runstart = lasttime = times[i];
+
+        runend0 = runstart0 = sum = 0;
+
+        i++;
+
+        while (i<wdata.numb_positive) {
+
+            time = times[i];
+
+            if (time - lasttime != incr) {
+                if (lasttime - runstart + win >= min) {
+                    if (!runflag0) {
+                        runflag0 = true;
+                        runstart0 = runstart;
+                        runend0 = lasttime;
+                    }
+                    else if (min > win && runstart <= runend0 + win) {
+                        runend0 = lasttime;
+                    }
+                    else {
+                        t_inter.add((long)runstart0,(long)runend0+win);
+                        sum += runend0-runstart0+win;
+
+                        runstart0 = runstart;
+                        runend0 = lasttime;
+                    }
+                }
+                runstart = time;
+            }
+
+            lasttime = time;
+        }
+
+
+        if (lasttime - runstart + win >= min)
+            runflag = true;
+
+        if (runflag0) {
+            if (runflag && min > win && runstart <= runend0 + win) {
+                runend0 = lasttime;
+                runflag = false;
+            }
+            t_inter.add((long)runstart0,(long)runend0+win);
+            sum += runend0-runstart0+win;
+        }
+        if (runflag) {
+            t_inter.add((long)runstart,(long)lasttime+win);
+            sum += lasttime-runstart+win;
+        }
+        t_inter.add((long)sum);
+
+        return t_inter;
+
+    }
 
 }
-
