@@ -268,14 +268,14 @@ public class Results {
             interp.interval[index_interp] = y0;
             interp.time_pico[index_interp] = x0;
 
-            x0++;
+            x0+=1000;
             index_interp++;
 
         }
 
     }
 
-    private parameters fdetrend(parameters interp) { //Calcola la regressione lineare e la sottrae, opera su una finestra mobile. Toglie la "tendenza"
+    private parameters fdetrend(parameters interp) { //Calcola la regressione lineare e la sottrae: opera su una finestra mobile. Toglie la "tendenza"
 
         int hwin = 40;
         int win = 2*hwin +1;
@@ -344,8 +344,8 @@ public class Results {
             sumy += detrend.interval[i];
         }
 
-        smooth.interval[0] = sumx/win;
-        smooth.time_pico[0] = sumy/win;
+        smooth.interval[0] = sumy/win;
+        smooth.time_pico[0] = sumx/win;
 
         sumx -= detrend.time_pico[0];
         sumy -= detrend.interval[0];
@@ -461,7 +461,7 @@ public class Results {
         htfilt.ampl[0] = sx[hwin];
         htfilt.omega[0] = sy[hwin];
 
-        for (int e = 0; e<index_interp; e++) {
+        for (int e = win; e<index_interp; e++) {
 
             if (e>win*i)
                 i++;
@@ -596,6 +596,7 @@ public class Results {
 
         start += incr;
 
+
         for (int i = win; i<index_interp; i++) {   //Da sistemare: i arriva fino a win
 
             while (amp_norm.time[i]< start && i<index_interp)  {
@@ -686,8 +687,8 @@ public class Results {
         double[] times = new double[wdata.numb_positive];
 
         for (int e = 0,u = 0; e<index_interp;e++) {
-            if (wdata.result[i]) {
-                times[u] = wdata.start[i];
+            if (wdata.result[e]) {
+                times[u] = wdata.start[e];
                 u++;
             }
         }
@@ -698,7 +699,7 @@ public class Results {
         runstart = lasttime = times[i];
 
         runend0 = runstart0 = sum = 0;
-
+        
         i++;
 
         while (i<wdata.numb_positive) {
@@ -727,6 +728,8 @@ public class Results {
             }
 
             lasttime = time;
+
+            i++;
         }
 
 
