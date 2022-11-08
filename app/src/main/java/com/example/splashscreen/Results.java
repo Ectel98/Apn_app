@@ -42,20 +42,24 @@ public class Results {
 
     private long id;
 
-    static class parameters {
+    static class time_parameters {
 
         public List<Double> interval;
         public List<Double> time_pico;
+
+        public time_parameters() {
+            interval = new ArrayList<Double>();
+            time_pico = new ArrayList<Double>();
+        }
+    }
+
+    static class ht_parameters {
 
         public List<Double> time;
         public List<Double> ampl;
         public List<Double> omega;
 
-        public parameters(int dimension) {
-            interval = new ArrayList<Double>();
-            time_pico = new ArrayList<Double>();
-        }
-        public parameters(int dimension,int dimension2,int dimension3) {
+        public ht_parameters() {
             time = new ArrayList<Double>();
             ampl = new ArrayList<Double>();
             omega = new ArrayList<Double>();
@@ -160,8 +164,8 @@ public class Results {
 
     public time_interval start_analisy(long identity) {
 
-        parameters read,interp,detrend,smooth,ht,htfilt,amp_norm,smooth_in_s;
-
+        time_parameters read,interp,detrend,smooth,smooth_in_s;
+        ht_parameters ht,htfilt,amp_norm;
         win_data wdata;
 
         double thrs;
@@ -200,9 +204,9 @@ public class Results {
 
     }
 
-    private parameters first_load_data() {     //restituisce x e y per l'interpolazione
+    private time_parameters first_load_data() {     //restituisce x e y per l'interpolazione
 
-        parameters read = new parameters(2);
+        time_parameters read = new time_parameters();
 
         read.time_pico.add(read_value());
         read.interval.add(read_value());
@@ -235,7 +239,7 @@ public class Results {
 
     }
 
-    private parameters linear_interpolation(parameters read) { // Interpolazione lineare, Ricampiono ogni secondo
+    private time_parameters linear_interpolation(time_parameters read) { // Interpolazione lineare, Ricampiono ogni secondo
 
         // X -> time_pico [ms]
         // Y -> interval  [ms]
@@ -246,7 +250,7 @@ public class Results {
         double data;
         double x0;
 
-        parameters interp = new parameters(43200);
+        time_parameters interp = new time_parameters();
 
         interp.interval.add(read_value());
         read.time_pico.set(0,read.time_pico.get(0)+read.interval.get(0));
@@ -285,7 +289,7 @@ public class Results {
 
     }
 
-    private parameters fdetrend(parameters interp) { //Calcola la regressione lineare e la sottrae: opera su una finestra mobile. Toglie la "tendenza"
+    private time_parameters fdetrend(time_parameters interp) { //Calcola la regressione lineare e la sottrae: opera su una finestra mobile. Toglie la "tendenza"
 
         int hwin = 40;
         int win = 2*hwin +1;
@@ -294,7 +298,7 @@ public class Results {
         float sumx,sumy,sumxy,sumx2;
         float a,b;
 
-        parameters detrend = new parameters(index_interp);
+        time_parameters detrend = new time_parameters();
 
         sumx = sumy = sumxy = sumx2 = 0;
 
@@ -339,12 +343,12 @@ public class Results {
 
     }
 
-    private parameters fsmooth(parameters detrend) { //Moving average filter
+    private time_parameters fsmooth(time_parameters detrend) { //Moving average filter
 
         double sumx,sumy;
         int i,win;
 
-        parameters smooth = new parameters(index_interp);
+        time_parameters smooth = new time_parameters();
 
         win = 5;
         sumx = sumy = 0;
@@ -377,9 +381,9 @@ public class Results {
 
     }
 
-    private parameters ms_to_s(parameters u) {
+    private time_parameters ms_to_s(time_parameters u) {
 
-        parameters p;
+        time_parameters p;
 
         for (int i = 0; i<u.time_pico.size();i++) {
             u.time_pico.set(i,u.time_pico.get(i)/1000);
@@ -393,11 +397,11 @@ public class Results {
     }
 
 
-    private parameters fht(parameters smooth) { //Hilbert transform
+    private ht_parameters fht(time_parameters smooth) { //Hilbert transform
 
         final int lfilt = 128;
 
-        parameters ht = new parameters(index_interp,index_interp,index_interp);
+        ht_parameters ht = new ht_parameters();
 
         int npt;
 
@@ -441,8 +445,8 @@ public class Results {
         for (int i=lfilt/2+1; i<=npt-lfilt/2; i++) {
             xt = smooth.interval.get(i);
             xht = xh[i];
-            ht.ampl.add((double)Math.sqrt(xt*xt+xht*xht));
-            phase[i] = (double) Math.atan2(xht ,xt);
+            ht.ampl.add(Math.sqrt(xt*xt+xht*xht));
+            phase[i] = Math.atan2(xht ,xt);
             if (phase[i] < phase[i-1])
                 ht.omega.add(phase[i]-phase[i-1]+pi2);
             else
@@ -459,9 +463,9 @@ public class Results {
 
     }
 
-    private parameters fhtfilt(parameters ht) {
+    private ht_parameters fhtfilt(ht_parameters ht) {
 
-        parameters htfilt = new parameters(index_interp,index_interp,index_interp);
+        ht_parameters htfilt = new ht_parameters();
 
         final int win=60;
 
@@ -512,11 +516,11 @@ public class Results {
 
     }
 
-    private parameters famp_norm(parameters htfilt) {
+    private ht_parameters famp_norm(ht_parameters htfilt) {
 
         float av_amp,av;
 
-        parameters amp_norm = new parameters(index_interp,index_interp,index_interp);
+        ht_parameters amp_norm = new ht_parameters();
 
         av_amp = 0;
 
@@ -534,10 +538,10 @@ public class Results {
 
     }
 
-    private double fht_min_thr(parameters amp_norm) {
+    private double fht_min_thr(ht_parameters amp_norm) {
 
         double max,min,mid,thres;
-        List<Double> ord_ampl= new ArrayList<Double>(amp_norm.ampl);
+        List<Double> ord_ampl= new ArrayList<>(amp_norm.ampl);
 
         Collections.sort(ord_ampl);
 
@@ -552,7 +556,7 @@ public class Results {
 
     }
 
-    private win_data htavsd (double thres, parameters amp_norm) {
+    private win_data htavsd (double thres, ht_parameters amp_norm) {
 
         win_data wdata;
 
