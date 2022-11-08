@@ -11,12 +11,21 @@ package com.example.splashscreen;
 import android.content.Context;
 
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.example.splashscreen.database.DataEcgDatabase;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 
 public class Results {
 
@@ -35,44 +44,44 @@ public class Results {
 
     static class parameters {
 
-        public float[] interval;
-        public float[] time_pico;
+        public List<Double> interval;
+        public List<Double> time_pico;
 
-        public float[] time;
-        public float[] ampl;
-        public float[] omega;
+        public List<Double> time;
+        public List<Double> ampl;
+        public List<Double> omega;
 
         public parameters(int dimension) {
-            interval = new float[dimension];
-            time_pico = new float[dimension];
+            interval = new ArrayList<Double>();
+            time_pico = new ArrayList<Double>();
         }
         public parameters(int dimension,int dimension2,int dimension3) {
-            time = new float[dimension];
-            ampl = new float[dimension2];
-            omega = new float[dimension3];
+            time = new ArrayList<Double>();
+            ampl = new ArrayList<Double>();
+            omega = new ArrayList<Double>();
         }
     }
 
     static class win_data {
 
-        public double[] start;
-        public double[] avy;
-        public double[] sdy;
-        public double[] ydetw;
-        public double[] avz;
-        public double[] sdz;
-        public double[] zdetw;
+        public List<Double> start;
+        public List<Double> avy;
+        public List<Double> sdy;
+        public List<Double> ydetw;
+        public List<Double> avz;
+        public List<Double> sdz;
+        public List<Double> zdetw;
         public boolean[] result;
         public int numb_positive;
 
         public win_data(int dimension) {
-            start = new double[dimension];
-            avy = new double[dimension];
-            sdy = new double[dimension];
-            ydetw = new double[dimension];
-            avz  = new double[dimension];
-            sdz = new double[dimension];
-            zdetw = new double[dimension];
+            start = new ArrayList<Double>();
+            avy = new ArrayList<Double>();
+            sdy = new ArrayList<Double>();
+            ydetw = new ArrayList<Double>();
+            avz  = new ArrayList<Double>();
+            sdz = new ArrayList<Double>();
+            zdetw = new ArrayList<Double>();
         }
 
         public void limits() {
@@ -92,8 +101,8 @@ public class Results {
 
             numb_positive = 0;
 
-            for (int i = 0;i<avy.length;i++) {
-                result[i] = (avy[i] >= AVAMP0 && avy[i] <= AVAMP1) && (sdy[i] >= SDAMP0 && sdy[i]<= SDAMP1) && (ydetw[i] >= AMPTIME0 && ydetw[i] <= AMPTIME1) && (avz[i] >= AVFREQ0 && avz[i] <= AVFREQ1) && (sdz[i] >= SDFREQ0 && sdz[i] <= SDFREQ1) && (zdetw[i] >= FREQTIME0 && zdetw[i] <= FREQTIME1);
+            for (int i = 0;i<avy.size();i++) {
+                result[i] = (avy.get(i) >= AVAMP0 && avy.get(i) <= AVAMP1) && (sdy.get(i) >= SDAMP0 && sdy.get(i)<= SDAMP1) && (ydetw.get(i) >= AMPTIME0 && ydetw.get(i) <= AMPTIME1) && (avz.get(i) >= AVFREQ0 && avz.get(i) <= AVFREQ1) && (sdz.get(i) >= SDFREQ0 && sdz.get(i) <= SDFREQ1) && (zdetw.get(i) >= FREQTIME0 && zdetw.get(i) <= FREQTIME1);
                 numb_positive++;
             }
         }
@@ -140,8 +149,6 @@ public class Results {
 
     private long n_data;
 
-    private float x0;
-
     private int index = 0;                     // Indici di lettura
     private int new_index = 0;                 //
 
@@ -153,7 +160,7 @@ public class Results {
 
     public time_interval start_analisy(long identity) {
 
-        parameters read,interp,detrend,smooth,ht,htfilt,amp_norm;
+        parameters read,interp,detrend,smooth,ht,htfilt,amp_norm,smooth_in_s;
 
         win_data wdata;
 
@@ -175,7 +182,9 @@ public class Results {
 
         smooth = fsmooth(detrend);
 
-        ht = fht(smooth);
+        smooth_in_s = ms_to_s(smooth);
+
+        ht = fht(smooth_in_s);
 
         htfilt = fhtfilt(ht);
 
@@ -195,21 +204,21 @@ public class Results {
 
         parameters read = new parameters(2);
 
-        read.time_pico[0] = read_value();
-        read.interval[0] = read_value();
-        read.time_pico[0] += read.interval[0];
+        read.time_pico.add(read_value());
+        read.interval.add(read_value());
+        read.time_pico.set(0,read.time_pico.get(0)+read.interval.get(0));
 
-        read.interval[1] = read_value();
-        read.time_pico[1] += read.interval[1];
+        read.interval.add(read_value());
+        read.time_pico.set(1,read.time_pico.get(1)+read.interval.get(1));
 
         return read;
 
     }
 
 
-    private float read_value() {
+    private double read_value() {
 
-        float value;
+        double value;
 
         n_data = getDatabaseManager().noteModel().loadNote(id).number_data;   // Lettura dati dal database
         String data = getDatabaseManager().noteModel().loadNote(id).data;     //
@@ -231,42 +240,43 @@ public class Results {
         // X -> time_pico [ms]
         // Y -> interval  [ms]
 
-        float y0;
-        float a;
-        float b;
-        float data;
+        double y0;
+        double a;
+        double b;
+        double data;
+        double x0;
 
         parameters interp = new parameters(43200);
 
-        interp.interval[0] = read_value();
-        interp.time_pico[0] += interp.interval[0];
+        interp.interval.add(read_value());
+        read.time_pico.set(0,read.time_pico.get(0)+read.interval.get(0));
 
-        x0 = read.time_pico[0] + 1000;
+        x0 = read.time_pico.get(0) + 1000;
 
         while(true) {
 
-            if (x0 > read.time_pico[1]) {
+            if (x0 > read.time_pico.get(0)) {
 
-                read.time_pico[0] = read.time_pico[1];
-                read.interval[0] = read.interval[1];
+                read.time_pico.set(0,(read.time_pico.get(1)));
+                read.interval.set(0,(read.interval.get(1)));
 
                 data = read_value();
 
                 if (data == 0) {  //Se sono finiti i dati
                     return interp; //Uscita
                 } else {
-                    read.interval[1] = data;
-                    read.time_pico[1] += read.interval[1];
+                    read.interval.add(data);
+                    read.time_pico.set(1,read.time_pico.get(1)+read.interval.get(1));
                 }
             }
 
-            b = (read.interval[1] - read.interval[0]) / (read.time_pico[1] - read.time_pico[0]);
-            a = read.interval[0] - b * read.time_pico[0];
+            b = (read.interval.get(1) - read.interval.get(0)) / (read.time_pico.get(1) - read.time_pico.get(0));
+            a = read.interval.get(0) - b * read.time_pico.get(0);
 
             y0 = (b * x0 + a);
 
-            interp.interval[index_interp] = y0;
-            interp.time_pico[index_interp] = x0;
+            interp.interval.add(y0);
+            interp.time_pico.add(x0);
 
             x0+=1000;
             index_interp++;
@@ -293,36 +303,36 @@ public class Results {
         }
 
         for (i=0; i<win; i++) {
-            sumx += interp.time_pico[i];
-            sumy += interp.interval[i];
-            sumxy += interp.time_pico[i]*interp.interval[i];
-            sumx2 += interp.time_pico[i]*interp.time_pico[i];
+            sumx += interp.time_pico.get(i);
+            sumy += interp.interval.get(i);
+            sumxy += interp.time_pico.get(i)*interp.interval.get(i);
+            sumx2 += interp.time_pico.get(i)*interp.time_pico.get(i);
         }
 
         b = (sumxy - sumx*sumy/win) / (sumx2 - sumx*sumx/win);
         a = sumy/win - b*sumx/win;
 
         for (i=0; i<=hwin; i++) {
-            detrend.interval[i] = interp.interval[i] - (a + b * interp.time_pico[i]);
-            detrend.time_pico[i] = interp.time_pico[i];
+            detrend.interval.add(interp.interval.get(i) - (a + b * interp.time_pico.get(i)));
+            detrend.time_pico.add(interp.time_pico.get(i));
         }
 
         for (i=win ; i<index_interp; i++) {
-            sumx += interp.time_pico[i]-interp.time_pico[i-win];
-            sumy += interp.interval[i]-interp.interval[i-win];
-            sumxy += interp.time_pico[i]*interp.interval[i]-interp.time_pico[i-win]*interp.interval[i-win];
-            sumx2 += interp.time_pico[i]*interp.time_pico[i]-interp.time_pico[i-win]*interp.time_pico[i-win];
+            sumx += interp.time_pico.get(i)-interp.time_pico.get(i-win);
+            sumy += interp.interval.get(i)-interp.interval.get(i-win);
+            sumxy += interp.time_pico.get(i)*interp.interval.get(i)-interp.time_pico.get(i-win)*interp.interval.get(i-win);
+            sumx2 += interp.time_pico.get(i)*interp.time_pico.get(i)-interp.time_pico.get(i-win)*interp.time_pico.get(i-win);
 
             b = (sumxy - sumx*sumy/win) / (sumx2 - sumx*sumx/win);
             a = sumy/win - b*sumx/win;
 
-            detrend.interval[i-hwin] = interp.interval[i-hwin] - (a + b*interp.time_pico[i-hwin]);
-            detrend.time_pico[i-hwin] = interp.time_pico[i-hwin];
+            detrend.interval.add(interp.interval.get(i-hwin) - (a + b*interp.time_pico.get(i-hwin)));
+            detrend.time_pico.add(interp.time_pico.get(i-hwin));
         }
 
         for (i=i-hwin; i<index_interp; i++) {
-            detrend.interval[i] = interp.interval[i] - (a + b * interp.time_pico[i]);
-            detrend.time_pico[i] = interp.time_pico[i];
+            detrend.interval.add(interp.interval.get(i) - (a + b * interp.time_pico.get(i)));
+            detrend.time_pico.add(interp.time_pico.get(i));
         }
 
         return detrend;
@@ -331,7 +341,7 @@ public class Results {
 
     private parameters fsmooth(parameters detrend) { //Moving average filter
 
-        float sumx,sumy;
+        double sumx,sumy;
         int i,win;
 
         parameters smooth = new parameters(index_interp);
@@ -340,30 +350,45 @@ public class Results {
         sumx = sumy = 0;
 
         for (i = 0;i<win;i++){
-            sumx += detrend.time_pico[i];
-            sumy += detrend.interval[i];
+            sumx += detrend.time_pico.get(i);
+            sumy += detrend.interval.get(i);
         }
 
-        smooth.interval[0] = sumy/win;
-        smooth.time_pico[0] = sumx/win;
+        smooth.interval.add(sumy/win);
+        smooth.time_pico.add(sumx/win);
 
-        sumx -= detrend.time_pico[0];
-        sumy -= detrend.interval[0];
+        sumx -= detrend.time_pico.get(0);
+        sumy -= detrend.interval.get(0);
 
-        for (;i<index_interp;i++) {
+        for (i = win;i<detrend.time_pico.size();i++) {
 
-            sumx += detrend.time_pico[i];
-            sumy += detrend.interval[i];
+            sumx += detrend.time_pico.get(i);
+            sumy += detrend.interval.get(i);
 
-            smooth.interval[i-win+1] = sumy/win;
-            smooth.time_pico[i-win+1] = sumx/win;
+            smooth.interval.add(sumy/win);
+            smooth.time_pico.add(sumx/win);
 
-            sumx -= detrend.time_pico[i-win+1];
-            sumy -= detrend.interval[i-win+1];
+            sumx -= detrend.time_pico.get(i-win+1);
+            sumy -= detrend.interval.get(i-win+1);
 
         }
 
         return smooth;
+
+    }
+
+    private parameters ms_to_s(parameters u) {
+
+        parameters p;
+
+        for (int i = 0; i<u.time_pico.size();i++) {
+            u.time_pico.set(i,u.time_pico.get(i)/1000);
+            u.interval.set(i,u.interval.get(i)/1000);
+        }
+
+        p = u;
+
+        return p;
 
     }
 
@@ -378,14 +403,17 @@ public class Results {
 
         //time -> time_pico
         //x -> interval
-        final float[] xh = new float[index_interp];
-        final float[] phase = new float[index_interp];
-        final float[] hilb = new float[lfilt+1];
-        final float pi, pi2;
-        float xt, xht, yt;
+        final double[] xh = new double[index_interp];
+        final double[] phase = new double[index_interp];
+        final double[] hilb = new double[lfilt+1];
+        final double pi, pi2;
+        double xt, xht, yt;
 
         pi = (float) Math.PI;
         pi2 = 2*pi;
+
+        ht.ampl.add(0.);
+        ht.omega.add(0.);
 
         for (int i=1; i<=lfilt; i++) {
             hilb[i] = (float) (1 / ((i - lfilt / 2) - 0.5) / pi);
@@ -396,7 +424,7 @@ public class Results {
         for (int l=1; l<=npt-lfilt+1; l++) {
             yt = 0;
             for (int i=1; i<=lfilt; i++)
-                yt = yt+smooth.interval[l+i-1]*hilb[lfilt+1-i];
+                yt = yt+smooth.interval.get(l+i-1)*hilb[lfilt+1-i];
             xh[l] = yt;
         }
 
@@ -411,18 +439,18 @@ public class Results {
 
         /* Ampl and phase */
         for (int i=lfilt/2+1; i<=npt-lfilt/2; i++) {
-            xt = smooth.interval[i];
+            xt = smooth.interval.get(i);
             xht = xh[i];
-            ht.ampl[i] = (float)Math.sqrt(xt*xt+xht*xht);
-            phase[i] = (float)Math.atan2(xht ,xt);
+            ht.ampl.add((double)Math.sqrt(xt*xt+xht*xht));
+            phase[i] = (double) Math.atan2(xht ,xt);
             if (phase[i] < phase[i-1])
-                ht.omega[i] = phase[i]-phase[i-1]+pi2;
+                ht.omega.add(phase[i]-phase[i-1]+pi2);
             else
-                ht.omega[i] = phase[i]-phase[i-1];
+                ht.omega.add(phase[i]-phase[i-1]);
         }
 
         for (int i=lfilt/2+2; i<=npt-lfilt/2; i++) {
-            ht.omega[i] = ht.omega[i] / pi2;
+            ht.omega.set(i,ht.omega.get(i) / pi2);
         }
 
         ht.time = smooth.time_pico;
@@ -437,9 +465,9 @@ public class Results {
 
         final int win=60;
 
-        float[] sx,sy;
+        double[] sx,sy;
 
-        sx = sy = new float[win];
+        sx = sy = new double[win];
 
         int i,j,hwin;
 
@@ -450,16 +478,16 @@ public class Results {
         j = hwin = win/2 -1;
 
         for (int k=0; k<win; k++) {
-            sx[k] = ht.ampl[k];
-            sy[k] = ht.omega[k];
+            sx[k] = ht.ampl.get(k);
+            sy[k] = ht.omega.get(k);
         }
 
         Arrays.sort(sx);
         Arrays.sort(sy);
 
-        htfilt.time[0] = ht.time[j];
-        htfilt.ampl[0] = sx[hwin];
-        htfilt.omega[0] = sy[hwin];
+        htfilt.time.add(ht.time.get(j));
+        htfilt.ampl.add(sx[hwin]);
+        htfilt.omega.add(sy[hwin]);
 
         for (int e = win; e<index_interp; e++) {
 
@@ -467,16 +495,16 @@ public class Results {
                 i++;
 
             for (int k=(i-1)*win; k<win*i; k++) {
-                sx[k] = ht.ampl[k];
-                sy[k] = ht.omega[k];
+                sx[k] = ht.ampl.get(k);
+                sy[k] = ht.omega.get(k);
             }
 
             Arrays.sort(sx);
             Arrays.sort(sy);
 
-            htfilt.time[e] = ht.time[j];
-            htfilt.ampl[e] = sx[hwin];
-            htfilt.omega[e] = sy[hwin];
+            htfilt.time.add(ht.time.get(j));
+            htfilt.ampl.add(sx[hwin]);
+            htfilt.omega.add(sy[hwin]);
 
         }
 
@@ -493,13 +521,13 @@ public class Results {
         av_amp = 0;
 
         for (int i = 0; i< index_interp;i++) {
-            av_amp += htfilt.ampl[i];
+            av_amp += htfilt.ampl.get(i);
         }
 
         av = av_amp/index_interp;
 
         for (int i = 0; i< index_interp;i++) {
-            amp_norm.ampl[i] = htfilt.ampl[i]/av;
+            amp_norm.ampl.add(htfilt.ampl.get(i)/av);
         }
 
         return amp_norm;
@@ -509,12 +537,12 @@ public class Results {
     private double fht_min_thr(parameters amp_norm) {
 
         double max,min,mid,thres;
-        float[] ord_ampl= amp_norm.ampl;
+        List<Double> ord_ampl= new ArrayList<Double>(amp_norm.ampl);
 
-        Arrays.sort(ord_ampl);
+        Collections.sort(ord_ampl);
 
-        min = ord_ampl[0];
-        max = ord_ampl[ord_ampl.length-1];
+        min = ord_ampl.get(0);
+        max = ord_ampl.get(ord_ampl.size()-1);
 
         mid = (max + min)/2;
 
@@ -545,27 +573,27 @@ public class Results {
 
         ydet = zdet = 0;
 
-        start = amp_norm.time[0];
-        sumy = amp_norm.ampl[0];
-        sumz = amp_norm.omega[0];
-        sumyy = amp_norm.ampl[0]*amp_norm.ampl[0];
+        start = amp_norm.time.get(0);
+        sumy = amp_norm.ampl.get(0);
+        sumz = amp_norm.omega.get(0);
+        sumyy = amp_norm.ampl.get(0)*amp_norm.ampl.get(0);
         sumzz = sumz*sumz;
 
-        if (amp_norm.ampl[0] >= thres)
+        if (amp_norm.ampl.get(0) >= thres)
             ydet++;
-        if (amp_norm.omega[0] <= 0.06)
+        if (amp_norm.omega.get(0) <= 0.06)
             zdet++;
 
         for (int i=1;  i<win; i++) {
 
-            sumy += amp_norm.ampl[i];
-            sumz += amp_norm.omega[i];
-            sumyy += amp_norm.ampl[i]*amp_norm.ampl[i];
-            sumzz += amp_norm.omega[i]*amp_norm.omega[i];
+            sumy += amp_norm.ampl.get(i);
+            sumz += amp_norm.omega.get(i);
+            sumyy += amp_norm.ampl.get(i)*amp_norm.ampl.get(i);
+            sumzz += amp_norm.omega.get(i)*amp_norm.omega.get(i);
 
-            if (amp_norm.ampl[i] >= thres)
+            if (amp_norm.ampl.get(i) >= thres)
                 ydet++;
-            if (amp_norm.omega[i] <= 0.06)
+            if (amp_norm.omega.get(i) <= 0.06)
                 zdet++;
         }
 
@@ -574,23 +602,23 @@ public class Results {
         sdy = Math.sqrt((sumyy - sumy*sumy/win)/(win-1));
         sdz = Math.sqrt((sumzz - sumz*sumz/win)/(win-1));
 
-        wdata.start[0] = start;
-        wdata.avy[0] = avy;
-        wdata.sdy[0] = sdy;
-        wdata.ydetw[0] = ((double)ydet)/win;
-        wdata.avz[0] = avz;
-        wdata.sdz[0] = sdz;
-        wdata.zdetw[0] = ((double)zdet)/win;
+        wdata.start.add(start);
+        wdata.avy.add(avy);
+        wdata.sdy.add(sdy);
+        wdata.ydetw.add(((double)ydet)/win);
+        wdata.avz.add(avz);
+        wdata.sdz.add(sdz);
+        wdata.zdetw.add(((double)zdet)/win);
 
         for (int j=0; j<incr; j++) {
-            sumy -= amp_norm.ampl[j];
-            sumz -= amp_norm.omega[j];
-            sumyy -= amp_norm.ampl[j]*amp_norm.ampl[j];
-            sumzz -= amp_norm.omega[j]*amp_norm.omega[j];
+            sumy -= amp_norm.ampl.get(j);
+            sumz -= amp_norm.omega.get(j);
+            sumyy -= amp_norm.ampl.get(j)*amp_norm.ampl.get(j);
+            sumzz -= amp_norm.omega.get(j)*amp_norm.omega.get(j);
 
-            if (amp_norm.ampl[j] >= thres)
+            if (amp_norm.ampl.get(j) >= thres)
                 ydet--;
-            if (amp_norm.omega[j] <= 0.06)
+            if (amp_norm.omega.get(j) <= 0.06)
                 zdet--;
         }
 
@@ -599,18 +627,18 @@ public class Results {
 
         for (int i = win; i<index_interp; i++) {   //Da sistemare: i arriva fino a win
 
-            while (amp_norm.time[i]< start && i<index_interp)  {
+            while (amp_norm.time.get(i)< start && i<index_interp)  {
                 i++;
             }
 
-            sumy += amp_norm.ampl[i];
-            sumz += amp_norm.omega[i];
-            sumyy += amp_norm.ampl[i]*amp_norm.ampl[i];
-            sumzz += amp_norm.omega[i]*amp_norm.omega[i];
+            sumy += amp_norm.ampl.get(i);
+            sumz += amp_norm.omega.get(i);
+            sumyy += amp_norm.ampl.get(i)*amp_norm.ampl.get(i);
+            sumzz += amp_norm.omega.get(i)*amp_norm.omega.get(i);
 
-            if (amp_norm.ampl[i] >= thres)
+            if (amp_norm.ampl.get(i) >= thres)
                 ydet++;
-            if (amp_norm.omega[i] <= 0.06)
+            if (amp_norm.omega.get(i) <= 0.06)
                 zdet++;
 
             if (i > win*e)
@@ -621,14 +649,14 @@ public class Results {
                 if (i >= win*e)
                     e++;
 
-                sumy += amp_norm.ampl[i];
-                sumz += amp_norm.omega[i];
-                sumyy += amp_norm.ampl[i]*amp_norm.ampl[i];
-                sumzz += amp_norm.omega[i]*amp_norm.omega[i];
+                sumy += amp_norm.ampl.get(i);
+                sumz += amp_norm.omega.get(i);
+                sumyy += amp_norm.ampl.get(i)*amp_norm.ampl.get(i);
+                sumzz += amp_norm.omega.get(i)*amp_norm.omega.get(i);
 
-                if (amp_norm.ampl[i] >= thres)
+                if (amp_norm.ampl.get(i) >= thres)
                     ydet++;
-                if (amp_norm.omega[i] <= 0.06)
+                if (amp_norm.omega.get(i) <= 0.06)
                     zdet++;
             }
 
@@ -640,25 +668,25 @@ public class Results {
             sdy = Math.sqrt((sumyy - sumy*sumy/win)/(win-1));
             sdz = Math.sqrt((sumzz - sumz*sumz/win)/(win-1));
 
-            wdata.start[i] = start;
-            wdata.avy[i] = avy;
-            wdata.sdy[i] = sdy;
-            wdata.ydetw[i] = ((double)ydet)/(win*e);
-            wdata.avz[i] = avz;
-            wdata.sdz[i] = sdz;
-            wdata.zdetw[i] = ((double)zdet)/(win*e);
+            wdata.start.add(start);
+            wdata.avy.add(avy);
+            wdata.sdy.add(sdy);
+            wdata.ydetw.add(((double)ydet)/(win*e));
+            wdata.avz.add(avz);
+            wdata.sdz.add(sdz);
+            wdata.zdetw.add(((double)zdet)/(win*e));
 
 
             for (int j=0, k=j+i; j<incr; j++, k++) {
                 if (k >= win*e)
                     k = (e-1)*win;
-                sumy -= amp_norm.ampl[k];
-                sumz -= amp_norm.omega[k];
-                sumyy -= amp_norm.ampl[k]*amp_norm.ampl[k];
-                sumzz -= amp_norm.omega[k]*amp_norm.omega[k];
-                if (amp_norm.ampl[k] >= thres)
+                sumy -= amp_norm.ampl.get(k);
+                sumz -= amp_norm.omega.get(k);
+                sumyy -= amp_norm.ampl.get(k)*amp_norm.ampl.get(k);
+                sumzz -= amp_norm.omega.get(k)*amp_norm.omega.get(k);
+                if (amp_norm.ampl.get(k) >= thres)
                     ydet--;
-                if (amp_norm.omega[k] <= 0.06)
+                if (amp_norm.omega.get(k) <= 0.06)
                     zdet--;
             }
 
@@ -688,7 +716,7 @@ public class Results {
 
         for (int e = 0,u = 0; e<index_interp;e++) {
             if (wdata.result[e]) {
-                times[u] = wdata.start[e];
+                times[u] = wdata.start.get(e);
                 u++;
             }
         }
