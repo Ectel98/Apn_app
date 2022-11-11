@@ -14,13 +14,14 @@ import com.example.splashscreen.database.DataEcgDatabase;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
+
+import java.text.SimpleDateFormat;
+
 
 public class Results {
 
     private final Context context;
-
 
     private DataEcgDatabase ecg_database;
 
@@ -30,7 +31,6 @@ public class Results {
         return ecg_database;
     }
 
-    private long id;
 
     static class time_parameters {
 
@@ -66,7 +66,6 @@ public class Results {
         public List<Double> sdz;
         public List<Double> zdetw;
         public List<Boolean> result;
-        public int numb_positive;
 
         public win_data() {
             start = new ArrayList<>();
@@ -100,22 +99,26 @@ public class Results {
                     result.add(true);
                 else
                     result.add(false);
+                //System.out.println (String.valueOf(AVAMP0) + " < "  + String.valueOf(avy.get(i)) + " > " + String.valueOf(AVAMP1) + " -- " + String.valueOf(SDAMP0) + " < "  + String.valueOf(sdy.get(i)) + " > " +String.valueOf(SDAMP1)+ " -- " +String.valueOf(AMPTIME0) + " < "  + String.valueOf(ydetw.get(i)) + " > " +String.valueOf(AMPTIME1)+ " -- " +String.valueOf(AVFREQ0) + " < "  + String.valueOf(avz.get(i)) + " > " +String.valueOf(AVFREQ1)+ " -- "+ String.valueOf(SDFREQ0) + " < "  + String.valueOf(sdz.get(i)) + " > " + String.valueOf(SDFREQ1)+ " -- " +String.valueOf(FREQTIME0) + " < "  + String.valueOf(zdetw.get(i)) + " > " +String.valueOf(FREQTIME1)+"\n");
             }
         }
+    }
+
+    public Results(Context context) {
+        this.context = context;
     }
 
 
     static class time_interval {
 
-        private List<Date> st_time;
-        private List<Date> end_time;
-        private Date sum;
+        private List<Long> st_time;
+        private List<Long> end_time;
+        private long sum;
         private final Boolean error;
 
         public time_interval() {
             st_time = new ArrayList<>();
             end_time = new ArrayList<>();
-            sum = new Date();
             error = false;
         }
 
@@ -124,59 +127,60 @@ public class Results {
         }
 
         public void add(long a,long b) {
-            st_time.add(new Date(a));
-            end_time.add(new Date(b));
+            st_time.add(a);
+            end_time.add(b);
         }
 
         public void add(long c) {
-            sum = new Date(c);
+            sum = c;
         }
 
-        public void data_out() {
+        public String data_out() {
 
-            return;
+            String s = "";
+
+            if (error)
+                s = "Errore";
+            else {
+                for (int i = 0; i<this.st_time.size();i++) {
+                    s += "Start time: " +  new SimpleDateFormat("HH:mm:ss").format(this.st_time.get(i)*1000 + 3600*23*1000);
+                    s += " End time: " +  new SimpleDateFormat("HH:mm:ss").format(this.end_time.get(i)*1000 + 3600*23*1000) + '\n';
+                }
+                s+= "Sum: " + new SimpleDateFormat("HH:mm:ss").format(this.sum + 3600*23*1000);
+            }
+
+            return s;
 
         }
 
     }
 
-    private long n_data;
 
-    private int index = 0;                     // Indici di lettura
-    private int new_index = 0;                 //
+    public time_interval start_analisy(long id) {
 
-
-    public Results(Context context) {
-        this.context = context;
-    }
-
-
-    public time_interval start_analisy(long identity) {
-
-        time_parameters read,interp,detrend,smooth,smooth_in_s;
+        time_parameters read,interp,detrend,smooth,to_s,filt;
         ht_parameters ht,htfilt,amp_norm;
         win_data wdata;
 
         double thrs;
 
-        id = identity;                        //ID tabella database
+        read = load_data(id);
 
-        read = first_load_data();
-
-        if (n_data < 100) {
+        if (read.interval.size() < 100) {
             System.out.print("Dati insufficenti");
             return new time_interval(true);
         }
+        to_s = ms_to_s(read);
 
-        interp = linear_interpolation(read);
+        filt = ffilt(to_s);
+
+        interp = linear_interpolation(filt);
 
         detrend = fdetrend(interp);
 
         smooth = fsmooth(detrend);
 
-        smooth_in_s = ms_to_s(smooth);
-
-        ht = fht(smooth_in_s);
+        ht = fht(smooth);
 
         htfilt = fhtfilt(ht);
 
@@ -192,42 +196,102 @@ public class Results {
 
     }
 
-    private time_parameters first_load_data() {     //restituisce x e y per l'interpolazione
+
+    public time_parameters load_data(long id) {
+
+        double ts;
+        String sr;
+        long n_data;
+        int index,new_index;
+
+        new_index = 0;
 
         time_parameters read = new time_parameters();
 
-        read.time_pico.add(read_value());
-        read.interval.add(read_value());
-        read.time_pico.set(0,read.time_pico.get(0)+read.interval.get(0));
+        ts = 0;
+        int i = 0;
 
-        read.interval.add(read_value());
-        read.time_pico.set(1,read.time_pico.get(1)+read.interval.get(1));
+
+        n_data = getDatabaseManager().noteModel().loadNote(id).number_data;   // Lettura dati dal database
+        String data = getDatabaseManager().noteModel().loadNote(id).data;     //
+        for (int e = 0;e<n_data;e++) {
+            index = data.indexOf(".", new_index);
+            sr = data.substring(new_index, index + 2);
+            new_index = index + 2;
+            if (!sr.isEmpty()) {
+                read.interval.add(Double.parseDouble(sr));
+            }
+        }
+
+        while (i<read.interval.size()) {
+            if (read.interval.get(i)<400 || read.interval.get(i)>1500 || read.interval.get(i) == Double.NaN)
+                read.interval.remove(i);
+            else
+                i++;
+        }
+
+        for (i = 0; i<read.interval.size();i++) {
+            ts += read.interval.get(i);
+            read.time_pico.add(ts);
+        }
 
         return read;
 
     }
 
+    private time_parameters ffilt(time_parameters read) {
 
-    private double read_value() {
+        time_parameters n_filt = new time_parameters();
 
-        double value;
+        double sum = 0;
+        double filt = 0.2;
+        double av,filtmax,filtmin;
+        int hwin = 10;
+        int win = hwin*2;
+        int e = win+1;
 
-        n_data = getDatabaseManager().noteModel().loadNote(id).number_data;   // Lettura dati dal database
-        String data = getDatabaseManager().noteModel().loadNote(id).data;     //
 
-        try {
-            index = data.indexOf(".", new_index);
-        } catch (StringIndexOutOfBoundsException siobe) {
-            return 0;                                                         //Se ho finito i dati da leggere
+        for (int i = 0; i<=win; i++) {
+            sum  += read.interval.get(i);
         }
-        value = Float.parseFloat(data.substring(new_index, index + 2));
-        new_index = index + 2;
 
-        return value;
+
+        sum -= read.interval.get(hwin);
+        av = (double)sum/win;
+
+        sum += read.interval.get(hwin) - read.interval.get(0);
+
+        filtmax = filtmin = filt * av;
+
+        if (read.interval.get(hwin) < av+filtmax && read.interval.get(hwin) > av-filtmin) {
+            n_filt.interval.add(read.interval.get(hwin));
+            n_filt.time_pico.add(read.time_pico.get(hwin));
+        }
+
+        while (e < read.interval.size()) {
+
+            sum += read.interval.get(e) - read.interval.get(e-hwin);   //Aggiungo il prossimo dato e tolgo il nuovo centrale
+            av = (double)sum/win;
+
+            sum += read.interval.get(e-hwin) - read.interval.get(e-win);
+
+            filtmax = filtmin = filt * av;
+
+            if (read.interval.get(e-hwin) < av+filtmax && read.interval.get(e-hwin) > av-filtmin) {
+                n_filt.interval.add(read.interval.get(e-hwin));
+                n_filt.time_pico.add(read.time_pico.get(e-hwin));
+
+            }
+            e++;
+        }
+
+
+        return n_filt;
+
 
     }
 
-    private time_parameters linear_interpolation(time_parameters read) { // Interpolazione lineare, Ricampiono ogni secondo
+    private time_parameters linear_interpolation(time_parameters filt) { // Interpolazione lineare, Ricampiono ogni secondo
 
         // X -> time_pico [ms]
         // Y -> interval  [ms]
@@ -235,44 +299,36 @@ public class Results {
         double y0;
         double a;
         double b;
-        double data;
         double x0;
+
+        int i = 0;
 
         time_parameters interp = new time_parameters();
 
-        interp.interval.add(read_value());
-        read.time_pico.set(0,read.time_pico.get(0)+read.interval.get(0));
 
-        x0 = read.time_pico.get(0) + 1000;
+        x0 = filt.time_pico.get(0) + 1;
 
-        while(true) {
+        while(i<filt.time_pico.size()-2) {
 
-            if (x0 > read.time_pico.get(0)) {
+            while (x0 >filt.time_pico.get(i) && i<(filt.time_pico.size()-2))
 
-                read.time_pico.set(0,(read.time_pico.get(1)));
-                read.interval.set(0,(read.interval.get(1)));
+                i+=1;
 
-                data = read_value();
-
-                if (data == 0) {  //Se sono finiti i dati
-                    return interp; //Uscita
-                } else {
-                    read.interval.add(data);
-                    read.time_pico.set(1,read.time_pico.get(1)+read.interval.get(1));
-                }
-            }
-
-            b = (read.interval.get(1) - read.interval.get(0)) / (read.time_pico.get(1) - read.time_pico.get(0));
-            a = read.interval.get(0) - b * read.time_pico.get(0);
+            b = (filt.interval.get(i+1) - filt.interval.get(i)) / (filt.time_pico.get(i+1) - filt.time_pico.get(i));
+            a = filt.interval.get(i) - b * filt.time_pico.get(i);
 
             y0 = (b * x0 + a);
+
 
             interp.interval.add(y0);
             interp.time_pico.add(x0);
 
-            x0+=1000;
+            x0+=1;
 
         }
+
+
+        return interp;
 
     }
 
@@ -282,8 +338,8 @@ public class Results {
         int win = 2*hwin +1;
         int i;
 
-        float sumx,sumy,sumxy,sumx2;
-        float a,b;
+        double sumx,sumy,sumxy,sumx2;
+        double a,b;
 
         time_parameters detrend = new time_parameters();
 
@@ -315,12 +371,14 @@ public class Results {
 
             detrend.interval.add(interp.interval.get(i-hwin) - (a + b*interp.time_pico.get(i-hwin)));
             detrend.time_pico.add(interp.time_pico.get(i-hwin));
+
         }
 
         for (i=i-hwin; i<interp.time_pico.size(); i++) {
             detrend.interval.add(interp.interval.get(i) - (a + b * interp.time_pico.get(i)));
             detrend.time_pico.add(interp.time_pico.get(i));
         }
+
 
         return detrend;
 
@@ -359,6 +417,7 @@ public class Results {
             sumy -= detrend.interval.get(i-win+1);
 
         }
+
 
         return smooth;
 
@@ -401,9 +460,6 @@ public class Results {
         pi = (float) Math.PI;
         pi2 = 2*pi;
 
-        ht.ampl.add(0.);
-        ht.omega.add(0.);
-
         for (int i=1; i<=lfilt; i++) {
             hilb[i] = (1 / ((i - lfilt / 2) - 0.5) / pi);
         }
@@ -443,6 +499,7 @@ public class Results {
             ht.ampl.add(ampl[i]);
             ht.time.add(smooth.time_pico.get(i));
         }
+
 
         return ht;
 
@@ -490,7 +547,7 @@ public class Results {
             }
 
             v_sx.set(win-1,ht.ampl.get(e));
-            v_sy.set(win-1,ht.ampl.get(e));
+            v_sy.set(win-1,ht.omega.get(e));
 
             j++;
 
@@ -506,13 +563,14 @@ public class Results {
 
         }
 
+
         return htfilt;
 
     }
 
     private ht_parameters famp_norm(ht_parameters htfilt) {
 
-        float av_amp,av;
+        double av_amp,av;
 
         ht_parameters amp_norm = new ht_parameters();
 
@@ -538,16 +596,15 @@ public class Results {
     private double fht_min_thr(ht_parameters amp_norm) {
 
         double max,min,mid,thres;
-        List<Double> ord_ampl= new ArrayList<>(amp_norm.ampl);
 
-        Collections.sort(ord_ampl);
-
-        min = ord_ampl.get(0);
-        max = ord_ampl.get(ord_ampl.size()-1);
+        min = Collections.min(amp_norm.ampl);
+        max = Collections.max(amp_norm.ampl);
 
         mid = (max + min)/2;
 
         thres = (-0.555 + 1.3*(mid+1)/2);
+
+        System.out.println("Soglia: " + Double.toString(thres));
 
         return thres;
 
@@ -649,8 +706,7 @@ public class Results {
                 zdet++;
 
 
-            for (int j=i+1; j<i+incr; j++) {
-
+            for (int j=i+1; j<i+incr;j++) {
                 sumy += amp_norm.ampl.get(j);
                 sumz += amp_norm.omega.get(j);
                 sumyy += amp_norm.ampl.get(j)*amp_norm.ampl.get(j);
@@ -719,6 +775,7 @@ public class Results {
             }
         }
 
+        //Aggiungere la possibilità che non ci siano fenomeni di apnea
 
         runflag = runflag0 = false;
 
@@ -771,7 +828,7 @@ public class Results {
             t_inter.add((long)runstart,(long)lasttime+win);
             sum += lasttime-runstart+win;
         }
-        t_inter.add((long)sum);
+        t_inter.add((long)sum*1000);
 
         return t_inter;
 

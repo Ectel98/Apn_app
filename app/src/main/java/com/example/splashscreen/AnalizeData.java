@@ -75,8 +75,9 @@ public class AnalizeData extends AppCompatActivity {
         results.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
 
-                res.start_analisy(id);
-
+                Results.time_interval t;
+                t = res.start_analisy(id);
+                System.out.println(t.data_out());
             }
         });
 
