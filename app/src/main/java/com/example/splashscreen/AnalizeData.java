@@ -33,7 +33,6 @@ public class AnalizeData extends AppCompatActivity {
     DataEcg table;
 
 
-
     Results res = new Results(this);
 
     @Override
@@ -57,7 +56,9 @@ public class AnalizeData extends AppCompatActivity {
         plot = findViewById(R.id.plot_button);
 
         i = getIntent();
+
         long id = i.getExtras().getInt("id");
+
 
         delete_data.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -123,6 +124,5 @@ public class AnalizeData extends AppCompatActivity {
         }
         return super.onKeyDown(keyCode, event);
     }
-
 
 }

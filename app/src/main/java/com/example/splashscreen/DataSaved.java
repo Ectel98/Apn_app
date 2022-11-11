@@ -1,6 +1,7 @@
 package com.example.splashscreen;
 
 import android.content.Intent;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
@@ -13,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.splashscreen.database.DataEcgDatabase;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +22,7 @@ public class DataSaved extends AppCompatActivity {
 
     ListView list;
     Button delete_bt;
+    Button example;
     ArrayAdapter<String> adapter;
 
     String[] id = {""};
@@ -38,7 +41,7 @@ public class DataSaved extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.data_saved_screen);
 
-
+        example = findViewById(R.id.example);
         list = findViewById(R.id.list_data);
         delete_bt = findViewById(R.id.button);
 
@@ -60,6 +63,13 @@ public class DataSaved extends AppCompatActivity {
         });
 
         load_id();
+
+        example.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                i = new Intent(DataSaved.this,AnalizeData.class);
+                i.putExtra("id",1000);
+            }
+        });
 
     }
 

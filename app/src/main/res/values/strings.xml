@@ -36,6 +36,7 @@
     <string name="text_list_data">
         Lista dei monitoraggi effetttuati
     </string>
+    <string name="example">Esepio</string>
 
     <!-- analize_data_screen -->
     <string name="saples_number">Numero di campioni: </string>

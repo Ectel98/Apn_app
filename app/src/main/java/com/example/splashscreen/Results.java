@@ -9,14 +9,19 @@ Goldberger, A., Amaral, L., Glass, L., Hausdorff, J., Ivanov, P. C., Mark, R., .
 package com.example.splashscreen;
 
 import android.content.Context;
+import android.view.View;
 
 import com.example.splashscreen.database.DataEcgDatabase;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import java.text.SimpleDateFormat;
+import java.util.Scanner;
 
 
 public class Results {
@@ -176,7 +181,7 @@ public class Results {
 
         read = load_data(id);
 
-        if (read.interval.size() < 100) {
+        if (read.interval.size() < 3600*3) {
             System.out.print("Dati insufficenti");
             return new time_interval(true);
         }
@@ -221,16 +226,36 @@ public class Results {
         ts = 0;
         int i = 0;
 
-
-        n_data = getDatabaseManager().noteModel().loadNote(id).number_data;   // Lettura dati dal database
-        String data = getDatabaseManager().noteModel().loadNote(id).data;     //
-        for (int e = 0;e<n_data;e++) {
-            index = data.indexOf(".", new_index);
-            sr = data.substring(new_index, index + 2);
-            new_index = index + 2;
-            if (!sr.isEmpty()) {
-                read.interval.add(Double.parseDouble(sr));
+        if (id==1000) {          //Si tratta dell'esempio
+            try {
+                InputStream is = context.getResources().openRawResource(R.raw.a03_rr_interval);
+                File f = new File("\\res\\raw\\a03_rr_interval.txt");
+                Scanner myReader = new Scanner(f);
+                while (myReader.hasNextLine()) {
+                    sr = myReader.nextLine();
+                    if (!sr.isEmpty()) {
+                        read.interval.add(Double.parseDouble(sr));
+                    }
+                }
             }
+
+            catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+
+        else {
+            n_data = getDatabaseManager().noteModel().loadNote(id).number_data;   // Lettura dati dal database
+            String data = getDatabaseManager().noteModel().loadNote(id).data;     //
+            for (int e = 0; e < n_data; e++) {
+                index = data.indexOf(".", new_index);
+                sr = data.substring(new_index, index + 2);
+                new_index = index + 2;
+                if (!sr.isEmpty()) {
+                    read.interval.add(Double.parseDouble(sr));
+                }
+            }
+
         }
 
         while (i<read.interval.size()) {
