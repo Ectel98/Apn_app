@@ -10,22 +10,12 @@ package com.example.splashscreen;
 
 import android.content.Context;
 
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
 import com.example.splashscreen.database.DataEcgDatabase;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 
 public class Results {
 
@@ -48,8 +38,8 @@ public class Results {
         public List<Double> time_pico;
 
         public time_parameters() {
-            interval = new ArrayList<Double>();
-            time_pico = new ArrayList<Double>();
+            interval = new ArrayList<>();
+            time_pico = new ArrayList<>();
         }
     }
 
@@ -60,9 +50,9 @@ public class Results {
         public List<Double> omega;
 
         public ht_parameters() {
-            time = new ArrayList<Double>();
-            ampl = new ArrayList<Double>();
-            omega = new ArrayList<Double>();
+            time = new ArrayList<>();
+            ampl = new ArrayList<>();
+            omega = new ArrayList<>();
         }
     }
 
@@ -75,17 +65,18 @@ public class Results {
         public List<Double> avz;
         public List<Double> sdz;
         public List<Double> zdetw;
-        public boolean[] result;
+        public List<Boolean> result;
         public int numb_positive;
 
-        public win_data(int dimension) {
-            start = new ArrayList<Double>();
-            avy = new ArrayList<Double>();
-            sdy = new ArrayList<Double>();
-            ydetw = new ArrayList<Double>();
-            avz  = new ArrayList<Double>();
-            sdz = new ArrayList<Double>();
-            zdetw = new ArrayList<Double>();
+        public win_data() {
+            start = new ArrayList<>();
+            avy = new ArrayList<>();
+            sdy = new ArrayList<>();
+            ydetw = new ArrayList<>();
+            avz  = new ArrayList<>();
+            sdz = new ArrayList<>();
+            zdetw = new ArrayList<>();
+            result = new ArrayList<>();
         }
 
         public void limits() {
@@ -103,11 +94,12 @@ public class Results {
             final double FREQTIME0=0.7;
             final double FREQTIME1=1;
 
-            numb_positive = 0;
 
             for (int i = 0;i<avy.size();i++) {
-                result[i] = (avy.get(i) >= AVAMP0 && avy.get(i) <= AVAMP1) && (sdy.get(i) >= SDAMP0 && sdy.get(i)<= SDAMP1) && (ydetw.get(i) >= AMPTIME0 && ydetw.get(i) <= AMPTIME1) && (avz.get(i) >= AVFREQ0 && avz.get(i) <= AVFREQ1) && (sdz.get(i) >= SDFREQ0 && sdz.get(i) <= SDFREQ1) && (zdetw.get(i) >= FREQTIME0 && zdetw.get(i) <= FREQTIME1);
-                numb_positive++;
+                if ((avy.get(i) >= AVAMP0 && avy.get(i) <= AVAMP1) && (sdy.get(i) >= SDAMP0 && sdy.get(i)<= SDAMP1) && (ydetw.get(i) >= AMPTIME0 && ydetw.get(i) <= AMPTIME1) && (avz.get(i) >= AVFREQ0 && avz.get(i) <= AVFREQ1) && (sdz.get(i) >= SDFREQ0 && sdz.get(i) <= SDFREQ1) && (zdetw.get(i) >= FREQTIME0 && zdetw.get(i) <= FREQTIME1))
+                    result.add(true);
+                else
+                    result.add(false);
             }
         }
     }
@@ -118,7 +110,7 @@ public class Results {
         private List<Date> st_time;
         private List<Date> end_time;
         private Date sum;
-        private Boolean error;
+        private final Boolean error;
 
         public time_interval() {
             st_time = new ArrayList<>();
@@ -148,9 +140,6 @@ public class Results {
 
     }
 
-
-    private int index_interp = 0;
-
     private long n_data;
 
     private int index = 0;                     // Indici di lettura
@@ -176,8 +165,7 @@ public class Results {
 
         if (n_data < 100) {
             System.out.print("Dati insufficenti");
-            time_interval t_er = new time_interval(true);
-            return t_er;
+            return new time_interval(true);
         }
 
         interp = linear_interpolation(read);
@@ -283,7 +271,6 @@ public class Results {
             interp.time_pico.add(x0);
 
             x0+=1000;
-            index_interp++;
 
         }
 
@@ -302,10 +289,6 @@ public class Results {
 
         sumx = sumy = sumxy = sumx2 = 0;
 
-        if (index_interp >= 43200) {
-            System.out.print("Error: Index out of range");
-        }
-
         for (i=0; i<win; i++) {
             sumx += interp.time_pico.get(i);
             sumy += interp.interval.get(i);
@@ -321,7 +304,7 @@ public class Results {
             detrend.time_pico.add(interp.time_pico.get(i));
         }
 
-        for (i=win ; i<index_interp; i++) {
+        for (i=win ; i<interp.time_pico.size(); i++) {
             sumx += interp.time_pico.get(i)-interp.time_pico.get(i-win);
             sumy += interp.interval.get(i)-interp.interval.get(i-win);
             sumxy += interp.time_pico.get(i)*interp.interval.get(i)-interp.time_pico.get(i-win)*interp.interval.get(i-win);
@@ -334,7 +317,7 @@ public class Results {
             detrend.time_pico.add(interp.time_pico.get(i-hwin));
         }
 
-        for (i=i-hwin; i<index_interp; i++) {
+        for (i=i-hwin; i<interp.time_pico.size(); i++) {
             detrend.interval.add(interp.interval.get(i) - (a + b * interp.time_pico.get(i)));
             detrend.time_pico.add(interp.time_pico.get(i));
         }
@@ -407,9 +390,11 @@ public class Results {
 
         //time -> time_pico
         //x -> interval
-        final double[] xh = new double[index_interp];
-        final double[] phase = new double[index_interp];
+        final double[] xh = new double[smooth.time_pico.size()];
+        final double[] phase = new double[smooth.time_pico.size()];
         final double[] hilb = new double[lfilt+1];
+        final double[] omega = new double[smooth.time_pico.size()];
+        final double[] ampl = new double[smooth.time_pico.size()];
         final double pi, pi2;
         double xt, xht, yt;
 
@@ -420,10 +405,10 @@ public class Results {
         ht.omega.add(0.);
 
         for (int i=1; i<=lfilt; i++) {
-            hilb[i] = (float) (1 / ((i - lfilt / 2) - 0.5) / pi);
+            hilb[i] = (1 / ((i - lfilt / 2) - 0.5) / pi);
         }
 
-        npt=index_interp-1;
+        npt=smooth.time_pico.size()-1;
 
         for (int l=1; l<=npt-lfilt+1; l++) {
             yt = 0;
@@ -437,27 +422,27 @@ public class Results {
             xh[i] = (float) 0.5*(xh[i]+xh[i+1]);
         }
 
-        if (npt - lfilt >= 0)
-            System.arraycopy(xh, 1, xh, 65, npt - lfilt);
+
+        System.arraycopy(xh, 1, xh, 65, npt - lfilt);
 
 
         /* Ampl and phase */
         for (int i=lfilt/2+1; i<=npt-lfilt/2; i++) {
             xt = smooth.interval.get(i);
             xht = xh[i];
-            ht.ampl.add(Math.sqrt(xt*xt+xht*xht));
+            ampl[i] = (Math.sqrt(xt*xt+xht*xht));
             phase[i] = Math.atan2(xht ,xt);
             if (phase[i] < phase[i-1])
-                ht.omega.add(phase[i]-phase[i-1]+pi2);
+                omega[i]=(phase[i]-phase[i-1]+pi2);
             else
-                ht.omega.add(phase[i]-phase[i-1]);
+                omega[i] = (phase[i]-phase[i-1]);
         }
 
         for (int i=lfilt/2+2; i<=npt-lfilt/2; i++) {
-            ht.omega.set(i,ht.omega.get(i) / pi2);
+            ht.omega.add(omega[i] / pi2);
+            ht.ampl.add(ampl[i]);
+            ht.time.add(smooth.time_pico.get(i));
         }
-
-        ht.time = smooth.time_pico;
 
         return ht;
 
@@ -469,46 +454,55 @@ public class Results {
 
         final int win=60;
 
-        double[] sx,sy;
+        List<Double> v_sx;
+        List<Double> v_sy;
 
-        sx = sy = new double[win];
+        List<Double> sx = new ArrayList<>();
+        List<Double> sy = new ArrayList<>();
 
-        int i,j,hwin;
+        int j,hwin;
 
         //Carica un numero di dati pari a win
         // time, x = amp, y = omega
 
-        i = 1;
         j = hwin = win/2 -1;
 
         for (int k=0; k<win; k++) {
-            sx[k] = ht.ampl.get(k);
-            sy[k] = ht.omega.get(k);
+            sx.add(ht.ampl.get(k));
+            sy.add(ht.omega.get(k));
         }
 
-        Arrays.sort(sx);
-        Arrays.sort(sy);
+        v_sx = new ArrayList<>(sx);
+        v_sy = new ArrayList<>(sy);
+
+        Collections.sort(sx);
+        Collections.sort(sy);
 
         htfilt.time.add(ht.time.get(j));
-        htfilt.ampl.add(sx[hwin]);
-        htfilt.omega.add(sy[hwin]);
+        htfilt.ampl.add(sx.get(hwin));
+        htfilt.omega.add(sy.get(hwin));
 
-        for (int e = win; e<index_interp; e++) {
+        for (int e = win; e<ht.ampl.size(); e++) {
 
-            if (e>win*i)
-                i++;
-
-            for (int k=(i-1)*win; k<win*i; k++) {
-                sx[k] = ht.ampl.get(k);
-                sy[k] = ht.omega.get(k);
+            for (int k=1; k<win; k++) {
+                v_sx.set(k-1,v_sx.get(k));
+                v_sy.set(k-1,v_sy.get(k));
             }
 
-            Arrays.sort(sx);
-            Arrays.sort(sy);
+            v_sx.set(win-1,ht.ampl.get(e));
+            v_sy.set(win-1,ht.ampl.get(e));
+
+            j++;
+
+            sx = new ArrayList<>(v_sx);
+            sy = new ArrayList<>(v_sy);
+
+            Collections.sort(sx);
+            Collections.sort(sy);
 
             htfilt.time.add(ht.time.get(j));
-            htfilt.ampl.add(sx[hwin]);
-            htfilt.omega.add(sy[hwin]);
+            htfilt.ampl.add(sx.get(hwin));
+            htfilt.omega.add(sy.get(hwin));
 
         }
 
@@ -524,15 +518,18 @@ public class Results {
 
         av_amp = 0;
 
-        for (int i = 0; i< index_interp;i++) {
+        for (int i = 0; i< htfilt.ampl.size();i++) {
             av_amp += htfilt.ampl.get(i);
         }
 
-        av = av_amp/index_interp;
+        av = av_amp/htfilt.ampl.size();
 
-        for (int i = 0; i< index_interp;i++) {
+        for (int i = 0; i< htfilt.ampl.size();i++) {
             amp_norm.ampl.add(htfilt.ampl.get(i)/av);
         }
+
+        amp_norm.omega = new ArrayList<>(htfilt.omega);
+        amp_norm.time = new ArrayList<>(htfilt.time);
 
         return amp_norm;
 
@@ -562,9 +559,11 @@ public class Results {
 
         int e = 1;
 
-        final int incr = 3600;     //Incremento
+        int i;
 
-        final int win = 18000;
+        final int incr = 60;     //Incremento
+
+        final int win = 300;
 
         //x -> amp_norm.time
         //y -> amp_norm.ampl
@@ -573,7 +572,7 @@ public class Results {
         double start,sumy,sumz,sumzz,sumyy,avy,avz,sdy,sdz;
         int ydet,zdet;
 
-        wdata = new win_data(index_interp);
+        wdata = new win_data();
 
         ydet = zdet = 0;
 
@@ -588,7 +587,7 @@ public class Results {
         if (amp_norm.omega.get(0) <= 0.06)
             zdet++;
 
-        for (int i=1;  i<win; i++) {
+        for (i=1;  i<win; i++) {
 
             sumy += amp_norm.ampl.get(i);
             sumz += amp_norm.omega.get(i);
@@ -628,12 +627,16 @@ public class Results {
 
         start += incr;
 
+        i = win;
 
-        for (int i = win; i<index_interp; i++) {   //Da sistemare: i arriva fino a win
+        while (i<amp_norm.ampl.size()) {   //Da sistemare: i arriva fino a win
 
-            while (amp_norm.time.get(i)< start && i<index_interp)  {
+            while (amp_norm.time.get(i)< start && i<amp_norm.ampl.size())  {
                 i++;
             }
+
+            if (amp_norm.time.size()-i<incr)
+                break;
 
             sumy += amp_norm.ampl.get(i);
             sumz += amp_norm.omega.get(i);
@@ -645,27 +648,21 @@ public class Results {
             if (amp_norm.omega.get(i) <= 0.06)
                 zdet++;
 
-            if (i > win*e)
-                e++;
 
-            for (int j=1; j<incr; i++, j++) {
+            for (int j=i+1; j<i+incr; j++) {
 
-                if (i >= win*e)
-                    e++;
+                sumy += amp_norm.ampl.get(j);
+                sumz += amp_norm.omega.get(j);
+                sumyy += amp_norm.ampl.get(j)*amp_norm.ampl.get(j);
+                sumzz += amp_norm.omega.get(j)*amp_norm.omega.get(j);
 
-                sumy += amp_norm.ampl.get(i);
-                sumz += amp_norm.omega.get(i);
-                sumyy += amp_norm.ampl.get(i)*amp_norm.ampl.get(i);
-                sumzz += amp_norm.omega.get(i)*amp_norm.omega.get(i);
-
-                if (amp_norm.ampl.get(i) >= thres)
+                if (amp_norm.ampl.get(j) >= thres)
                     ydet++;
-                if (amp_norm.omega.get(i) <= 0.06)
+                if (amp_norm.omega.get(j) <= 0.06)
                     zdet++;
             }
 
-            if (i >= win*e)
-                e++;
+            i+=incr;
 
             avy = sumy/win;
             avz = sumz/win;
@@ -681,16 +678,14 @@ public class Results {
             wdata.zdetw.add(((double)zdet)/(win*e));
 
 
-            for (int j=0, k=j+i; j<incr; j++, k++) {
-                if (k >= win*e)
-                    k = (e-1)*win;
-                sumy -= amp_norm.ampl.get(k);
-                sumz -= amp_norm.omega.get(k);
-                sumyy -= amp_norm.ampl.get(k)*amp_norm.ampl.get(k);
-                sumzz -= amp_norm.omega.get(k)*amp_norm.omega.get(k);
-                if (amp_norm.ampl.get(k) >= thres)
+            for (int j=i-win; j<(i-win)+incr; j++) {
+                sumy -= amp_norm.ampl.get(j);
+                sumz -= amp_norm.omega.get(j);
+                sumyy -= amp_norm.ampl.get(j)*amp_norm.ampl.get(j);
+                sumzz -= amp_norm.omega.get(j)*amp_norm.omega.get(j);
+                if (amp_norm.ampl.get(j) >= thres)
                     ydet--;
-                if (amp_norm.omega.get(k) <= 0.06)
+                if (amp_norm.omega.get(j) <= 0.06)
                     zdet--;
             }
 
@@ -705,38 +700,35 @@ public class Results {
 
     private time_interval detruns (win_data wdata) {
 
-        final int incr = 3600;
-        final int win = 18000;
-        int min = 54000;
+        final int incr = 60;
+        final int win = 300;
+        int min = 900;
 
         time_interval t_inter = new time_interval();
 
-        int i = 0;
+        int i = 1;
 
         boolean runflag,runflag0;
         double runstart,lasttime,time,runstart0,runend0,sum;
 
-        double[] times = new double[wdata.numb_positive];
+        List<Double> times = new ArrayList<>();
 
-        for (int e = 0,u = 0; e<index_interp;e++) {
-            if (wdata.result[e]) {
-                times[u] = wdata.start.get(e);
-                u++;
+        for (int e = 0; e<wdata.start.size();e++) {
+            if (wdata.result.get(e)) {
+                times.add(wdata.start.get(e));
             }
         }
 
 
         runflag = runflag0 = false;
 
-        runstart = lasttime = times[i];
+        runstart = lasttime = times.get(0);
 
         runend0 = runstart0 = sum = 0;
-        
-        i++;
 
-        while (i<wdata.numb_positive) {
+        while (i<times.size()) {
 
-            time = times[i];
+            time = times.get(i);
 
             if (time - lasttime != incr) {
                 if (lasttime - runstart + win >= min) {
@@ -745,13 +737,12 @@ public class Results {
                         runstart0 = runstart;
                         runend0 = lasttime;
                     }
-                    else if (min > win && runstart <= runend0 + win) {
+                    else if (runstart <= runend0 + win) {
                         runend0 = lasttime;
                     }
                     else {
                         t_inter.add((long)runstart0,(long)runend0+win);
                         sum += runend0-runstart0+win;
-
                         runstart0 = runstart;
                         runend0 = lasttime;
                     }
@@ -769,7 +760,7 @@ public class Results {
             runflag = true;
 
         if (runflag0) {
-            if (runflag && min > win && runstart <= runend0 + win) {
+            if (runflag && runstart <= runend0 + win) {
                 runend0 = lasttime;
                 runflag = false;
             }
