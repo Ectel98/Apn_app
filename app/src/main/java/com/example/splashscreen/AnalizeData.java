@@ -29,7 +29,10 @@ public class AnalizeData extends AppCompatActivity {
     TextView analisi_result;
     Button delete_data;
     Button results;
+    Button plot;
     DataEcg table;
+
+
 
     Results res = new Results(this);
 
@@ -51,6 +54,7 @@ public class AnalizeData extends AppCompatActivity {
         analisi_result = findViewById(R.id.tx_analisi_result);
         delete_data = findViewById(R.id.bt_delete_data);
         results = findViewById(R.id.bt_results);
+        plot = findViewById(R.id.plot_button);
 
         i = getIntent();
         long id = i.getExtras().getInt("id");
@@ -77,7 +81,21 @@ public class AnalizeData extends AppCompatActivity {
 
                 Results.time_interval t;
                 t = res.start_analisy(id);
+                String s = t.data_out();
                 System.out.println(t.data_out());
+                if (s.equals("Errore"))
+                    analisi_result.setText("Errore: dati insufficienti");
+                else {
+                    analisi_result.setText("Risultati dell'analisi:" + '\n' + s);
+                    plot.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+
+        plot.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                System.out.println("Da fare...");
             }
         });
 

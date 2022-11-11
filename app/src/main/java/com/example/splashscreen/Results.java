@@ -114,11 +114,13 @@ public class Results {
         private List<Long> st_time;
         private List<Long> end_time;
         private long sum;
+        private int len_p_times;
         private final Boolean error;
 
         public time_interval() {
             st_time = new ArrayList<>();
             end_time = new ArrayList<>();
+            len_p_times = 0;
             error = false;
         }
 
@@ -135,20 +137,28 @@ public class Results {
             sum = c;
         }
 
+        public void add(int c) {
+            len_p_times = c;
+        }
+
         public String data_out() {
 
             String s = "";
 
             if (error)
                 s = "Errore";
-            else {
+            else if (this.st_time.size()>0) {
+                s+= "Intervalli temporali in cui sono stati rilevati fenomeni di apnea:";
                 for (int i = 0; i<this.st_time.size();i++) {
                     s += "Start time: " +  new SimpleDateFormat("HH:mm:ss").format(this.st_time.get(i)*1000 + 3600*23*1000);
                     s += " End time: " +  new SimpleDateFormat("HH:mm:ss").format(this.end_time.get(i)*1000 + 3600*23*1000) + '\n';
                 }
                 s+= "Sum: " + new SimpleDateFormat("HH:mm:ss").format(this.sum + 3600*23*1000);
             }
-
+            else if (len_p_times>0)
+                s = "Sono stati rilevati " + Integer.toString(len_p_times) + " minuti di apnea notturna, non consecutivi in intervalli inferiori a 15 minuti.";
+            else
+                s = "Non sono stati rilevati fenomeni di apnea notturna";
             return s;
 
         }
@@ -779,7 +789,13 @@ public class Results {
 
         runflag = runflag0 = false;
 
-        runstart = lasttime = times.get(0);
+        try {
+            runstart = lasttime = times.get(0);
+        }
+        catch (Exception e) {
+            t_inter.add((int)times.size());
+            return t_inter;
+        }
 
         runend0 = runstart0 = sum = 0;
 

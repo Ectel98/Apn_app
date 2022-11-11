@@ -45,6 +45,7 @@
     <string name="heart_rate">Battito cardiaco medio: </string>
     <string name="delete_data_button">Elimina dati</string>
     <string name="results_button">Risultati</string>
+    <string name="plot_button">Grafico</string>
 
 
 </resources>
