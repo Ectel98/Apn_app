@@ -1,6 +1,8 @@
 package com.example.splashscreen;
 
+
 import android.content.Intent;
+
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -12,13 +14,12 @@ import com.androidplot.xy.XYSeries;
 
 import java.util.Arrays;
 
-public class Plot extends AppCompatActivity {
+public class Plot extends AppCompatActivity  {
 
-    private XYPlot plot;
+    XYPlot plot;
 
-    @Override
-    public void onCreate(Bundle savedInstanceState)
-    {
+    public void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.plot_screen);
 
@@ -30,15 +31,18 @@ public class Plot extends AppCompatActivity {
 
         Number[] n = new Number[interval.length];
 
-        for (int e = 0;e<interval.length;e++) {
-            n[e] = (Number)interval[e];
+        for (int e = 0; e < interval.length; e++) {
+            n[e] = (Number) interval[e];
         }
 
-        XYSeries stime = new SimpleXYSeries(Arrays.asList(n),SimpleXYSeries.ArrayFormat.Y_VALS_ONLY, "");
+        XYSeries stime = new SimpleXYSeries(Arrays.asList(n), SimpleXYSeries.ArrayFormat.Y_VALS_ONLY, "");
 
         LineAndPointFormatter inter = new LineAndPointFormatter(this, R.xml.line_point_formatter_with_labels);
 
         plot.addSeries(stime, inter);
 
+        plot.redraw();
+
     }
 }
+
