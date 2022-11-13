@@ -9,13 +9,19 @@ Goldberger, A., Amaral, L., Glass, L., Hausdorff, J., Ivanov, P. C., Mark, R., .
 package com.example.splashscreen;
 
 import android.content.Context;
-import android.view.View;
+import android.os.Build;
+import android.os.Environment;
+
+import androidx.annotation.RequiresApi;
 
 import com.example.splashscreen.database.DataEcgDatabase;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,12 +45,18 @@ public class Results {
 
     static class time_parameters {
 
-        public List<Double> interval;
-        public List<Double> time_pico;
+        private List<Double> interval;
+        private List<Double> time_pico;
 
         public time_parameters() {
             interval = new ArrayList<>();
             time_pico = new ArrayList<>();
+        }
+
+        @RequiresApi(api = Build.VERSION_CODES.N)
+        public double[] get_data() {
+            double[] array = new double[interval.size()];
+            return interval.stream().mapToDouble(i->i).toArray();
         }
     }
 
@@ -153,7 +165,7 @@ public class Results {
             if (error)
                 s = "Errore";
             else if (this.st_time.size()>0) {
-                s+= "Intervalli temporali in cui sono stati rilevati fenomeni di apnea:";
+                s+= "Intervalli temporali in cui sono stati rilevati fenomeni di apnea:" + '\n';
                 for (int i = 0; i<this.st_time.size();i++) {
                     s += "Start time: " +  new SimpleDateFormat("HH:mm:ss").format(this.st_time.get(i)*1000 + 3600*23*1000);
                     s += " End time: " +  new SimpleDateFormat("HH:mm:ss").format(this.end_time.get(i)*1000 + 3600*23*1000) + '\n';
@@ -170,10 +182,11 @@ public class Results {
 
     }
 
+    public time_parameters smooth;
 
     public time_interval start_analisy(long id) {
 
-        time_parameters read,interp,detrend,smooth,to_s,filt;
+        time_parameters read,interp,detrend,to_s,filt;
         ht_parameters ht,htfilt,amp_norm;
         win_data wdata;
 
@@ -185,6 +198,7 @@ public class Results {
             System.out.print("Dati insufficenti");
             return new time_interval(true);
         }
+
         to_s = ms_to_s(read);
 
         filt = ffilt(to_s);
@@ -223,16 +237,17 @@ public class Results {
 
         time_parameters read = new time_parameters();
 
+        //File f = new File("\\res\\raw\\a03_rr_interval.txt");
         ts = 0;
         int i = 0;
 
         if (id==1000) {          //Si tratta dell'esempio
+
             try {
                 InputStream is = context.getResources().openRawResource(R.raw.a03_rr_interval);
-                File f = new File("\\res\\raw\\a03_rr_interval.txt");
-                Scanner myReader = new Scanner(f);
-                while (myReader.hasNextLine()) {
-                    sr = myReader.nextLine();
+                //Scanner myReader = new Scanner(f);
+                BufferedReader r = new BufferedReader(new InputStreamReader(is));
+                while ((sr = r.readLine())!= null) {
                     if (!sr.isEmpty()) {
                         read.interval.add(Double.parseDouble(sr));
                     }
@@ -240,6 +255,8 @@ public class Results {
             }
 
             catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }

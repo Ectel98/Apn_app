@@ -1,7 +1,6 @@
 package com.example.splashscreen;
 
 import android.content.Intent;
-import android.content.res.Resources;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
@@ -14,7 +13,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.splashscreen.database.DataEcgDatabase;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -68,9 +66,9 @@ public class DataSaved extends AppCompatActivity {
             public void onClick(View v) {
                 i = new Intent(DataSaved.this,AnalizeData.class);
                 i.putExtra("id",1000);
+                DataSaved.this.startActivityForResult(i,1);
             }
         });
-
     }
 
     @Override
@@ -95,11 +93,12 @@ public class DataSaved extends AppCompatActivity {
         String d;
 
         for (long i = 1;i<=size;i++) {
-            if (getDatabaseManager().noteModel().loadNote(i).start_time!=null) {
-                d = getDatabaseManager().noteModel().loadNote(i).start_time;
-                d = d.substring(0, d.length() - 15);
-                u.add(d);
-            }
+                if (getDatabaseManager().noteModel().loadNote(i).start_time != null) {
+                    d = getDatabaseManager().noteModel().loadNote(i).start_time;
+                    d = d.substring(0, d.length() - 15);
+                    u.add(d);
+                }
+
         }
 
         //if (size<1)

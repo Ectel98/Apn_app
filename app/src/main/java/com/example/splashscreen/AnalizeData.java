@@ -1,16 +1,22 @@
 package com.example.splashscreen;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.splashscreen.database.DataEcg;
 import com.example.splashscreen.database.DataEcgDatabase;
+
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.List;
 
 public class AnalizeData extends AppCompatActivity {
 
@@ -87,31 +93,37 @@ public class AnalizeData extends AppCompatActivity {
                 if (s.equals("Errore"))
                     analisi_result.setText("Errore: dati insufficienti");
                 else {
-                    analisi_result.setText("Risultati dell'analisi:" + '\n' + s);
+                    analisi_result.setText("Risultati dell'analisi:" + '\n' +  s);
                     plot.setVisibility(View.VISIBLE);
                 }
             }
         });
 
         plot.setOnClickListener(new View.OnClickListener() {
-            @Override
+            @RequiresApi(api = Build.VERSION_CODES.N)
             public void onClick(View v) {
-                System.out.println("Da fare...");
+                final double[] ari = res.smooth.get_data();
+                Intent i = new Intent(AnalizeData.this,Plot.class);
+                i.putExtra("ar", ari);
+                AnalizeData.this.startActivity(i);
             }
         });
 
-        d = getDatabaseManager().noteModel().loadNote(id).start_time;
-        d = d.substring(0, d.length() - 15);
-        start_time.append(d);
+        if (id != 1000) {         //Se non sto eseguendo l'esempio
 
-        d = getDatabaseManager().noteModel().loadNote(id).end_time;
-        d = d.substring(0, d.length() - 15);
-        end_time.append(d);
+            d = getDatabaseManager().noteModel().loadNote(id).start_time;
+            d = d.substring(0, d.length() - 15);
+            start_time.append(d);
 
-        //time
+            d = getDatabaseManager().noteModel().loadNote(id).end_time;
+            d = d.substring(0, d.length() - 15);
+            end_time.append(d);
 
-        e = getDatabaseManager().noteModel().loadNote(id).number_data;
-        n_samples.append(String.valueOf(e));
+            //time
+
+            e = getDatabaseManager().noteModel().loadNote(id).number_data;
+            n_samples.append(String.valueOf(e));
+        }
 
     }
 
