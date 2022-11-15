@@ -1,3 +1,5 @@
+
+
 package com.example.splashscreen;
 
 import android.Manifest;
@@ -14,6 +16,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.StrictMode;
 import android.view.KeyEvent;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -32,6 +35,11 @@ public class ConnectionScreen extends AppCompatActivity {
 
     BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     //LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+    public ConnectionScreen() {
+        if(BuildConfig.DEBUG)
+            StrictMode.enableDefaults();
+    }
 
 
     @Override
@@ -64,7 +72,6 @@ public class ConnectionScreen extends AppCompatActivity {
         if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             System.out.print("ciao");
         }
-
          */
 
         // -------------  Avvio il Servizio ------------------
@@ -95,8 +102,8 @@ public class ConnectionScreen extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             String data;
-            data = intent.getExtras().getString("send_string");
-            if (data.equals("certo")) {
+            data = intent.getExtras().getString("state");
+            if (data.equals("connesso")) {
                 LocalBroadcastManager.getInstance(context).unregisterReceiver(messageReceiver);
                 Intent myIntent = new Intent(ConnectionScreen.this, ContentMain.class);
                 ConnectionScreen.this.startActivity(myIntent);

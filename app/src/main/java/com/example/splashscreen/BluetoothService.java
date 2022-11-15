@@ -101,8 +101,8 @@ public class BluetoothService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) { //Viene eseguito allo "start" dell'activity
 
         if (intent.getExtras() == null) {
-            if (connec_flag)  //Controlla se ci sono dispositivi accopiati, se ci sono fa il cambio di activity subito
-                send_message_to_activity("certo");
+            if (connec_flag)   //Controlla se ci sono dispositivi accopiati, se ci sono fa il cambio di activity subito
+                send_message_to_activity("connesso");
             btScanner.startScan(leScanCallback);  //Avvio la scansione
             first_time_flag = true;
         }
@@ -112,14 +112,16 @@ public class BluetoothService extends Service {
             first_time_flag = false;
 
             if (message_to_esp.equals("start_monitoring")) {
-
                 monitoring_flag = true;
                 bluetoothGatt.discoverServices();
-
             }
 
             else if (message_to_esp.equals("end_monitoring")) {
                 stop_monit();
+                bluetoothGatt.discoverServices();
+            }
+
+            else if (message_to_esp.equals("stato")) {
                 bluetoothGatt.discoverServices();
             }
 
@@ -228,7 +230,7 @@ public class BluetoothService extends Service {
                     @Override
                     public void run() {
                         bluetoothGatt.discoverServices();
-                        send_message_to_activity("certo");
+                        send_message_to_activity("connesso");
                     }
                 }, 600);
             }
@@ -267,9 +269,17 @@ public class BluetoothService extends Service {
 
     private void send_message_to_activity(String message_to_send) {
         Intent intent = new Intent("send_string");
-        intent.putExtra("send_string", message_to_send);
+        intent.putExtra("state", message_to_send);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
+
+    private void send_time_to_activity(String message_to_send) {
+        Intent intent = new Intent("send_time");
+        intent.putExtra("time", message_to_send);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
+
 
 
     //--------------------------Invia messaggi all'esp-----------------------
@@ -338,6 +348,7 @@ public class BluetoothService extends Service {
                     if (!monitoring_esp_flag)
                         start_monit();
                     send_message_to_activity(datastr);
+                    send_time_to_activity(ecg_data_table.start_time);
                 }
 
                 if (datastr.equals("Error: ld")|| datastr.equals("Error: temp")|| datastr.equals("Error: sup")) {
