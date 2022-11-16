@@ -95,7 +95,7 @@ public class DataSaved extends AppCompatActivity {
         for (long i = 1;i<=size;i++) {
                 if (getDatabaseManager().noteModel().loadNote(i).start_time != null) {
                     d = getDatabaseManager().noteModel().loadNote(i).start_time;
-                    d = d.substring(0, d.length() - 15);
+                    d = d.substring(4, d.length() - 15);
                     u.add(d);
                 }
 

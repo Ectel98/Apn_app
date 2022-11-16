@@ -8,11 +8,9 @@ import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.StrictMode;
-import android.os.SystemClock;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Chronometer;
 import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
@@ -25,10 +23,13 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.Locale;
+import java.util.TimeZone;
+
 
 public class Monitoring extends AppCompatActivity {
 
@@ -40,7 +41,7 @@ public class Monitoring extends AppCompatActivity {
     Button start_end_moni;
 
     Boolean button_flag;
-    LocalDateTime stat_date;
+    String start_time;
 
 
     public Monitoring() {
@@ -73,21 +74,15 @@ public class Monitoring extends AppCompatActivity {
                     send_message_to_service("end_monitoring");
 
                     String d = Calendar.getInstance().getTime().toString();
-                    d = d.substring(0, d.length() - 15);
-                    time_end.setText("Fine: " + d);
+                    time_end.setText("Fine: " + d.substring(4, d.length() - 15));
+
+                    time_total.setText("Tempo: " + duration(start_time,d));
 
                 }
 
             }
         });
 
-        if (button_flag) {
-            Duration total_data;
-            Instant acutal_data =  Instant.now();
-            total_data = Duration.between(stat_date,acutal_data);
-
-            time_total.setText("Tempo: " + total_data.toString());
-        }
 
         LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, new IntentFilter("send_string"));
         LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiverTime, new IntentFilter("send_time"));
@@ -117,6 +112,7 @@ public class Monitoring extends AppCompatActivity {
                 state.setText("Stato: Monitoraggio attivo");
 
                 time_end.setText("Fine: ");
+                time_total.setText("Tempo: ");
 
             } else if (data.equals("ended")) {
 
@@ -148,13 +144,9 @@ public class Monitoring extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            String time = intent.getExtras().getString("time");
+            start_time = intent.getExtras().getString("time");
 
-            time_start.setText("Inizio: "+time.substring(0,time.length()-15));
-
-            DateTimeFormatter f = DateTimeFormatter.ofPattern("hh:mm a, EEE M/d/uuuu");
-
-            stat_date = LocalDateTime.parse(time,f);
+            time_start.setText("Inizio: "+start_time.substring(4,start_time.length()-15)); //Wed Nov 16 12:21:15
 
         }
 
@@ -169,6 +161,42 @@ public class Monitoring extends AppCompatActivity {
             finish();
         }
         return super.onKeyDown(keyCode, event);
+    }
+
+    public String duration(String s_start,String s_end) {
+
+        long end = (Integer.parseInt(s_end.substring(11, 13))) * 3600 + (Integer.parseInt(s_end.substring(14, 16))) * 60 + (Integer.parseInt(s_end.substring(17, 19)));
+        long start = (Integer.parseInt(s_start.substring(11, 13))) * 3600 + (Integer.parseInt(s_start.substring(14, 16))) * 60 + (Integer.parseInt(s_start.substring(17, 19)));
+        long midnight = 24*3600;
+
+        int h,m,s;
+        String out,ho,mi,se;
+
+        if (end > start) {
+            h = (int) ((end - start) / 3600);
+            m = (int) ((end - start) - h * 3600) / 60;
+            s = (int) ((end - start) - h * 3600 - m * 60);
+        }
+
+        else {
+            h = (int) ((midnight - start) / 3600);
+            m = (int) ((midnight - start) - h * 3600) / 60;
+            s = (int) ((midnight - start) - h * 3600 - m * 60);
+
+            h += (int) (end / 3600);
+            m += (int) (end - h * 3600) / 60;
+            s += (int) (end - h * 3600 - m * 60);
+        }
+
+        if (h<10) ho = '0' + Integer.toString(h);
+        else ho = Integer.toString(h);
+        if (m<10) mi = '0' + Integer.toString(m);
+        else mi = Integer.toString(m);
+        if (s<10) se = '0' + Integer.toString(s);
+        else se = Integer.toString(s);
+
+        return (ho + ':' + mi + ':' + se);
+
     }
 
 }
