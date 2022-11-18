@@ -34,7 +34,7 @@
 
     <!-- data_saved_screen -->
     <string name="text_list_data">
-        Lista dei monitoraggi effetttuati
+        Lista dei monitoraggi effettuati
     </string>
     <string name="example">Esempio</string>
 
@@ -48,5 +48,7 @@
     <string name="results_button">Risultati</string>
     <string name="plot_button">Grafico</string>
 
+    <!-- plot_screen -->
+    <string name="text_plot">Grafico intervalli R-R normalizzati </string>
 
 </resources>

@@ -7,8 +7,11 @@ import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.androidplot.xy.BoundaryMode;
 import com.androidplot.xy.LineAndPointFormatter;
+import com.androidplot.xy.PanZoom;
 import com.androidplot.xy.SimpleXYSeries;
+import com.androidplot.xy.StepMode;
 import com.androidplot.xy.XYPlot;
 import com.androidplot.xy.XYSeries;
 
@@ -39,10 +42,18 @@ public class Plot extends AppCompatActivity  {
 
         LineAndPointFormatter inter = new LineAndPointFormatter(this, R.xml.line_point_formatter_with_labels);
 
+        plot.getLegend().setVisible(false);
+
+        plot.setDomainStep(StepMode.SUBDIVIDE, 10.0);
+        plot.setRangeStep(StepMode.SUBDIVIDE, 10);
+
         plot.addSeries(stime, inter);
+
+        PanZoom.attach(plot, PanZoom.Pan.HORIZONTAL, PanZoom.Zoom.STRETCH_HORIZONTAL);
+
+        plot.getOuterLimits().set(0, interval.length, -1, 1);
 
         plot.redraw();
 
     }
 }
-

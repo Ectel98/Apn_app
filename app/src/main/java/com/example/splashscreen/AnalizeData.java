@@ -46,7 +46,7 @@ public class AnalizeData extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.analize_data_screen);
 
-        String d;
+        String d,r;
         long e;
 
         Intent i;
@@ -112,17 +112,22 @@ public class AnalizeData extends AppCompatActivity {
         if (id != 1000) {         //Se non sto eseguendo l'esempio
 
             d = getDatabaseManager().noteModel().loadNote(id).start_time;
-            d = d.substring(0, d.length() - 15);
-            start_time.append(d);
+            start_time.append(d.substring(4, d.length() - 15));
 
-            d = getDatabaseManager().noteModel().loadNote(id).end_time;
-            d = d.substring(0, d.length() - 15);
-            end_time.append(d);
+            r = getDatabaseManager().noteModel().loadNote(id).end_time;
+            end_time.append(r.substring(4, d.length() - 15));
 
-            //time
+            time.append(duration(d,r));
 
             e = getDatabaseManager().noteModel().loadNote(id).number_data;
             n_samples.append(String.valueOf(e));
+
+        }
+
+        else {
+            start_time.append("Questo è un esempio");
+            end_time.append("Questo è un esempio");
+            time.append("Questo è un esempio");
         }
 
     }
@@ -135,6 +140,42 @@ public class AnalizeData extends AppCompatActivity {
             finish();
         }
         return super.onKeyDown(keyCode, event);
+    }
+
+    public String duration(String s_start,String s_end) {
+
+        long end = (Integer.parseInt(s_end.substring(11, 13))) * 3600 + (Integer.parseInt(s_end.substring(14, 16))) * 60 + (Integer.parseInt(s_end.substring(17, 19)));
+        long start = (Integer.parseInt(s_start.substring(11, 13))) * 3600 + (Integer.parseInt(s_start.substring(14, 16))) * 60 + (Integer.parseInt(s_start.substring(17, 19)));
+        long midnight = 24*3600;
+
+        int h,m,s;
+        String out,ho,mi,se;
+
+        if (end > start) {
+            h = (int) ((end - start) / 3600);
+            m = (int) ((end - start) - h * 3600) / 60;
+            s = (int) ((end - start) - h * 3600 - m * 60);
+        }
+
+        else {
+            h = (int) ((midnight - start) / 3600);
+            m = (int) ((midnight - start) - h * 3600) / 60;
+            s = (int) ((midnight - start) - h * 3600 - m * 60);
+
+            h += (int) (end / 3600);
+            m += (int) (end - h * 3600) / 60;
+            s += (int) (end - h * 3600 - m * 60);
+        }
+
+        if (h<10) ho = '0' + Integer.toString(h);
+        else ho = Integer.toString(h);
+        if (m<10) mi = '0' + Integer.toString(m);
+        else mi = Integer.toString(m);
+        if (s<10) se = '0' + Integer.toString(s);
+        else se = Integer.toString(s);
+
+        return (ho + ':' + mi + ':' + se);
+
     }
 
 }
