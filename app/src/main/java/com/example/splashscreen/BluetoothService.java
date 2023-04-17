@@ -223,7 +223,7 @@ public class BluetoothService extends Service {
                 device = result.getDevice();
 
                 bluetoothGatt = device.connectGatt(context, true, gattCallback);  //Stabiliscono la connessione con l'esp
-                bluetoothGatt.connect();
+                bluetoothGatt.connect();                                                    //
                 connec_flag = true;
 
                 handler.postDelayed(new Runnable() {           //Aspetto 600ms per avviare il discover
